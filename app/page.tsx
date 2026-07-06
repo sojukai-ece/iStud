@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from '../lib/supabase';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -39,12 +39,31 @@ export default function Home() {
   const [newChatInput, setNewChatInput] = useState('');
 
   // Handlers
-  const handleAddFolder = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFolderName.trim()) return;
-    setFolders([...folders, { id: Date.now().toString(), name: newFolderName, cardCount: 0 }]);
+  const handleAddFolder = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!newFolderName.trim()) return;
+
+  // Let's debug what's happening
+  console.log("Attempting to save folder:", newFolderName);
+
+  const { data, error } = await supabase
+    .from('folders')
+    .insert([{ name: newFolderName }])
+    .select();
+
+  if (error) {
+    console.error("Supabase Error:", error); // Check your Browser Console (F12)
+    alert("Error saving folder: " + error.message);
+    return;
+  }
+
+  console.log("Success! Data from Supabase:", data);
+
+  if (data) {
+    setFolders([...folders, { id: data[0].id, name: data[0].name, cardCount: 0 }]);
     setNewFolderName('');
-  };
+  }
+};
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
