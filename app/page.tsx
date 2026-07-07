@@ -245,7 +245,7 @@ export default function Home() {
 
       {/* PROFILE MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="text-xl font-black text-[#1B365D]">Account Settings</h3>
@@ -387,7 +387,7 @@ export default function Home() {
                   {currentCardIndex >= flashcards.length ? (
                     <div className="bg-white rounded-4xl p-10 text-center shadow-xl border border-slate-200/80"><div className="text-6xl mb-4">🏆</div><h3 className="text-3xl font-black text-[#1B365D] mb-8">Deck Completed!</h3><button onClick={() => setCurrentCardIndex(0)} className="bg-[#1B365D] text-white font-bold px-8 py-4 rounded-2xl shadow-md">Restart Deck 🔄</button></div>
                   ) : (
-                    <div className="bg-white rounded-4xl min-h-[400px] flex flex-col justify-center items-center p-8 md:p-12 shadow-xl border border-slate-200/80 text-center relative overflow-hidden">
+                    <div className="bg-white rounded-4xl min-h-100 flex flex-col justify-center items-center p-8 md:p-12 shadow-xl border border-slate-200/80 text-center relative overflow-hidden">
                       <span className={`text-xs font-black uppercase tracking-widest mb-6 ${isCardFlipped ? 'text-emerald-500' : 'text-blue-500'}`}>{isCardFlipped ? 'Answer' : 'Question'}</span>
                       <h2 className="text-3xl md:text-4xl font-black text-[#1B365D] mb-12">{isCardFlipped ? flashcards[currentCardIndex].answer : flashcards[currentCardIndex].question}</h2>
                       <div className="w-full mt-auto pt-8 border-t border-slate-100 flex justify-center">
@@ -467,10 +467,10 @@ export default function Home() {
                       {/* Left: User's Blurt */}
                       <div className="bg-white rounded-4xl p-6 shadow-md border border-slate-200">
                         <h4 className="font-black text-[#1B365D] mb-4 border-b pb-2">Your Brain Dump</h4>
-                        <div className="whitespace-pre-wrap text-sm font-medium text-slate-700 bg-slate-50 p-4 rounded-xl min-h-[300px]">{blurtingInput || "No notes taken."}</div>
+                        <div className="whitespace-pre-wrap text-sm font-medium text-slate-700 bg-slate-50 p-4 rounded-xl min-h-75">{blurtingInput || "No notes taken."}</div>
                       </div>
                       {/* Right: Actual Deck for Self-Correction */}
-                      <div className="bg-white rounded-4xl p-6 shadow-md border border-slate-200 h-[600px] flex flex-col">
+                      <div className="bg-white rounded-4xl p-6 shadow-md border border-slate-200 h-150 flex flex-col">
                         <h4 className="font-black text-[#1B365D] mb-4 border-b pb-2 flex justify-between">
                           <span>Actual Deck</span>
                           <span className="text-xs text-emerald-500">Self-Correct Now</span>
