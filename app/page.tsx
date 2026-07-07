@@ -15,7 +15,7 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   
-  // NEW: Settings Modal State
+  // --- NEW: PROFILE SETTINGS STATE ---
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
 
@@ -31,7 +31,7 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newChatInput, setNewChatInput] = useState('');
 
-  // --- INITIALIZE & FETCH DATA + REALTIME ---
+  // --- 1. INITIALIZE & FETCH DATA + REALTIME ---
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -43,21 +43,30 @@ export default function Home() {
       }
 
       if (user) {
-        const { data: folderData } = await supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        const { data: folderData } = await supabase
+          .from('folders')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
         if (folderData) setFolders(folderData);
       }
       
-      const { data: chatData } = await supabase.from('community_messages').select('*').order('created_at', { ascending: true });
+      // Fetch live cloud chat history instead of hardcoded messages
+      const { data: chatData } = await supabase
+        .from('community_messages')
+        .select('*')
+        .order('created_at', { ascending: true });
       if (chatData) setChatMessages(chatData);
     };
 
     init();
 
+    // The Realtime Handshake for Community Chat
     const channel = supabase
       .channel('live-chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages' }, (payload) => {
         const newMessage = payload.new as ChatMessage;
-        // BUGFIX: Check if message already exists to prevent duplicates from Optimistic UI
+        // Check if message already exists to prevent duplicates from Optimistic UI
         setChatMessages((prev) => {
           if (prev.find(msg => msg.id === newMessage.id)) return prev;
           return [...prev, newMessage];
@@ -68,18 +77,21 @@ export default function Home() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // --- DATABASE FUNCTIONS ---
+  // --- 2. DATABASE FUNCTIONS ---
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    setUser(null); setFolders([]); setProfileMenuOpen(false); setIsSettingsOpen(false);
+    setUser(null); 
+    setFolders([]); 
+    setProfileMenuOpen(false); 
+    setIsSettingsOpen(false);
   };
 
-  // NEW: Update Profile Function
+  // --- NEW: UPDATE PROFILE FUNCTION ---
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     
-    // Update the display name in Supabase Auth
+    // Update the display name in Supabase Auth Metadata
     const { data, error } = await supabase.auth.updateUser({
       data: { display_name: displayName }
     });
@@ -90,43 +102,63 @@ export default function Home() {
       setUser(data.user);
       setIsSettingsOpen(false);
       setProfileMenuOpen(false);
-      alert("Profile updated successfully!");
     }
   };
 
   const openFolder = async (folder: Folder) => {
     setSelectedFolder(folder);
-    const { data } = await supabase.from('flashcards').select('*').eq('folder_id', folder.id).order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('flashcards')
+      .select('*')
+      .eq('folder_id', folder.id)
+      .order('created_at', { ascending: false });
     if (data) setFlashcards(data);
   };
 
   const handleAddFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim() || !user) return alert("Please log in first!");
-    const { data, error } = await supabase.from('folders').insert([{ name: newFolderName, user_id: user.id }]).select();
+
+    const { data, error } = await supabase
+      .from('folders')
+      .insert([{ name: newFolderName, user_id: user.id }])
+      .select();
+
     if (error) return alert(error.message);
-    if (data) { setFolders([data[0], ...folders]); setNewFolderName(''); }
+    if (data) {
+      setFolders([data[0], ...folders]);
+      setNewFolderName('');
+    }
   };
 
   const handleAddFlashcard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuestion.trim() || !newAnswer.trim() || !selectedFolder || !user) return;
-    const { data, error } = await supabase.from('flashcards').insert([{ folder_id: selectedFolder.id, user_id: user.id, question: newQuestion, answer: newAnswer }]).select();
+
+    const { data, error } = await supabase
+      .from('flashcards')
+      .insert([{ folder_id: selectedFolder.id, user_id: user.id, question: newQuestion, answer: newAnswer }])
+      .select();
+
     if (error) return alert(error.message);
-    if (data) { setFlashcards([data[0], ...flashcards]); setNewQuestion(''); setNewAnswer(''); }
+    if (data) {
+      setFlashcards([data[0], ...flashcards]);
+      setNewQuestion(''); setNewAnswer('');
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChatInput.trim() || !user) return;
     
-    const senderName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Anonymous Scholar';
+    const senderName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Guest Scholar';
     const messageToSend = newChatInput;
-    setNewChatInput(''); // Clear input instantly
+    setNewChatInput(''); // Clear input instantly for snappy UX
     
-    // BUGFIX: Optimistic UI - Draw to screen immediately before cloud confirms!
+    // --- OPTIMISTIC UI FIX --- 
+    // Draw to screen immediately before the cloud confirms
     const tempMessage: ChatMessage = {
-      id: Date.now().toString(), // Fake temporary ID
+      id: Date.now().toString(),
       user_id: user.id,
       user_name: senderName,
       text: messageToSend,
@@ -134,7 +166,7 @@ export default function Home() {
     };
     setChatMessages((prev) => [...prev, tempMessage]);
 
-    // Send to cloud in background
+    // Send to Supabase in the background
     const { error } = await supabase
       .from('community_messages')
       .insert([{ user_id: user.id, user_name: senderName, text: messageToSend }]);
@@ -142,7 +174,9 @@ export default function Home() {
     if (error) alert("Chat Error: " + error.message);
   };
 
-  const formatTime = (isoString: string) => new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (isoString: string) => {
+    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     // Added pb-24 so content doesn't get hidden behind the mobile bottom nav
@@ -152,14 +186,30 @@ export default function Home() {
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/80">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <div onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }} className="flex items-center gap-3 cursor-pointer">
-            <div className="w-12 h-12 rounded-2xl bg-[#1B365D] flex items-center justify-center shadow-md p-1.5"><Image src="/istud-logo.png" alt="Logo" width={40} height={40} className="object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} /></div>
-            <span className="text-2xl font-black text-[#1B365D]">iSt<span className="text-blue-500">u</span>d</span>
+            <div className="w-12 h-12 rounded-2xl bg-[#1B365D] flex items-center justify-center shadow-md p-1.5">
+              <Image src="/istud-logo.png" alt="Logo" width={40} height={40} className="object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-black tracking-tight text-[#1B365D]">iSt<span className="text-blue-500">u</span>d</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 -mt-1">Academic Portal</span>
+            </div>
           </div>
           
           {/* Hidden on Mobile, Flex on Desktop */}
           <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-full">
-            {['dashboard', 'study-hub', 'auxilink-ai', 'community'].map((tab) => (
-              <button key={tab} onClick={() => { setActiveTab(tab as any); setSelectedFolder(null); }} className={`px-5 py-2 rounded-full text-sm font-bold capitalize transition-all ${activeTab === tab ? 'bg-white text-[#1B365D] shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>{tab.replace('-', ' ')}</button>
+            {[
+              { id: 'dashboard', label: '📊 Dashboard' },
+              { id: 'study-hub', label: '📚 Study Hub' },
+              { id: 'auxilink-ai', label: '🤖 Auxilink AI' },
+              { id: 'community', label: '💬 Community' },
+            ].map((tab) => (
+              <button 
+                key={tab.id} 
+                onClick={() => { setActiveTab(tab.id as any); setSelectedFolder(null); }} 
+                className={`px-5 py-2 rounded-full text-sm font-bold capitalize transition-all ${activeTab === tab.id ? 'bg-white text-[#1B365D] shadow-sm scale-102' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                {tab.label}
+              </button>
             ))}
           </nav>
 
@@ -167,8 +217,12 @@ export default function Home() {
             {user ? (
               <div>
                 <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">
-                  <div className="w-6 h-6 rounded-full bg-[#1B365D] text-white flex items-center justify-center text-xs font-bold">{user.email?.charAt(0).toUpperCase()}</div>
-                  <span className="hidden sm:inline text-sm font-bold text-[#1B365D] max-w-25 truncate">{user.user_metadata?.display_name || user.email}</span>
+                  <div className="w-6 h-6 rounded-full bg-[#1B365D] text-white flex items-center justify-center text-xs font-bold">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline text-sm font-bold text-[#1B365D] max-w-25 truncate">
+                    {user.user_metadata?.display_name || user.email}
+                  </span>
                 </button>
                 {profileMenuOpen && (
                   <div className="absolute right-0 top-12 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-fade-in">
@@ -176,20 +230,20 @@ export default function Home() {
                       <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-1">Signed in as</p>
                       <p className="text-sm font-bold text-[#1B365D] truncate">{user.email}</p>
                     </div>
-                    <button onClick={() => setIsSettingsOpen(true)} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">⚙️ Account Settings</button>
+                    <button onClick={() => { setIsSettingsOpen(true); setProfileMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">⚙️ Account Settings</button>
                     <button onClick={handleSignOut} className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors">🚪 Sign Out</button>
                   </div>
                 )}
               </div>
             ) : (
-              <Link href="/login" className="bg-[#1B365D] text-white px-6 py-2 rounded-full font-black text-sm shadow-md">Sign In</Link>
+              <Link href="/login" className="bg-[#1B365D] text-white px-6 py-2.5 rounded-full font-black text-sm shadow-md">Sign In</Link>
             )}
           </div>
         </div>
       </header>
 
       {/* --- NEW: MOBILE BOTTOM NAVIGATION --- */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 px-2 py-3 flex justify-around items-center shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 px-2 py-3 flex justify-around items-center shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         {[
           { id: 'dashboard', icon: '📊', label: 'Home' },
           { id: 'study-hub', icon: '📚', label: 'Study' },
@@ -209,7 +263,7 @@ export default function Home() {
 
       {/* --- NEW: PROFILE SETTINGS MODAL --- */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="text-xl font-black text-[#1B365D]">Account Settings</h3>
@@ -217,13 +271,13 @@ export default function Home() {
             </div>
             <form onSubmit={handleUpdateProfile} className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Email Address (Unchangeable)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Email Address</label>
                 <input type="text" value={user?.email} disabled className="w-full bg-slate-100 text-slate-500 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold cursor-not-allowed" />
               </div>
               <div>
                 <label className="text-xs font-bold text-[#1B365D] uppercase tracking-wider mb-1 block">Display Name</label>
-                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Enter a custom display name" className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                <p className="text-xs text-slate-400 mt-2">This is the name other scholars will see in the community chat.</p>
+                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="e.g., Engr. Benedict" className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                <p className="text-xs text-slate-400 mt-2">This is the name other scholars will see in the campus lounge.</p>
               </div>
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 bg-slate-100 text-slate-600 px-4 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors">Cancel</button>
@@ -247,7 +301,23 @@ export default function Home() {
               <p className="text-blue-100/80 font-medium leading-relaxed">Track retention metrics, launch your customized decks, or collaborate with fellow scholars across the campus.</p>
               <div className="pt-4 flex flex-wrap gap-3 md:gap-4">
                 <button onClick={() => setActiveTab('study-hub')} className="bg-white text-[#1B365D] font-black px-6 py-3.5 rounded-full hover:bg-blue-50 transition-colors shadow-lg text-sm md:text-base w-full sm:w-auto">Open Study Hub →</button>
+                <button onClick={() => setActiveTab('auxilink-ai')} className="bg-blue-600/40 border border-blue-400/40 text-white font-bold px-6 py-3.5 rounded-full hover:bg-blue-600/60 transition-colors text-sm md:text-base w-full sm:w-auto">Ask Auxilink AI</button>
               </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-center">
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Folders Created</span>
+              <div className="text-4xl font-black text-[#1B365D] mt-2">{folders.length} Folders</div>
+            </div>
+            <div className="bg-linear-to-br from-blue-500 to-blue-600 text-white p-6 rounded-3xl shadow-lg">
+              <span className="text-blue-100 text-xs font-bold uppercase tracking-wider">Retention Rate</span>
+              <div className="text-4xl font-black mt-2">94%</div>
+              <p className="text-blue-100 text-sm font-medium mt-2">Active recall is boosting your memory.</p>
+            </div>
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-center">
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Study Streak</span>
+              <div className="text-4xl font-black text-amber-500 mt-2">🔥 Active</div>
             </div>
           </div>
         </main>
@@ -256,6 +326,29 @@ export default function Home() {
       {/* --- STUDY HUB VIEW --- */}
       {activeTab === 'study-hub' && (
         <main className="max-w-6xl mx-auto px-4 md:px-6 pt-6 md:pt-10 animate-fade-in">
+          {!selectedFolder && (
+            <div className="mb-10 space-y-4">
+              <div>
+                <h2 className="text-3xl font-black text-[#1B365D]">🧠 Study Hub & Techniques</h2>
+                <p className="text-slate-600 font-medium">Select a scientific study strategy or manage your flashcard folders.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                {[
+                  { id: 'active-recall', name: 'Active Recall', icon: '🔄', desc: 'Test yourself before checking notes.' },
+                  { id: 'feynman', name: 'Feynman Technique', icon: '🗣️', desc: 'Explain concepts in simple terms.' },
+                  { id: 'pomodoro', name: 'Pomodoro Timer', icon: '⏱️', desc: '25m focus / 5m structured breaks.' },
+                  { id: 'blurting', name: 'Blurting Method', icon: '📝', desc: 'Write everything from memory fast.' },
+                ].map((tech) => (
+                  <div key={tech.id} onClick={() => setSelectedTechnique(tech.id)} className={`p-5 rounded-3xl border-2 cursor-pointer transition-all ${selectedTechnique === tech.id ? 'border-[#1B365D] bg-blue-50/50 shadow-md' : 'border-slate-200/80 bg-white hover:border-slate-300'}`}>
+                    <div className="text-2xl mb-2">{tech.icon}</div>
+                    <h4 className="font-black text-[#1B365D]">{tech.name}</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1">{tech.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!selectedFolder ? (
             <div className="bg-white p-6 md:p-8 rounded-4xl border border-slate-200/80 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -300,8 +393,17 @@ export default function Home() {
       {activeTab === 'auxilink-ai' && (
         <main className="max-w-4xl mx-auto px-4 md:px-6 pt-16 text-center space-y-6 animate-fade-in">
           <div className="w-20 h-20 rounded-3xl bg-linear-to-tr from-[#1B365D] to-blue-500 text-white flex items-center justify-center text-4xl mx-auto shadow-xl">🤖</div>
-          <h2 className="text-4xl sm:text-5xl font-black text-[#1B365D]">Auxilink AI</h2>
-          <p className="text-lg text-slate-600 font-medium max-w-xl mx-auto">Development Module</p>
+          <span className="bg-blue-100 text-blue-800 font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-widest">Module In Development</span>
+          <h2 className="text-4xl sm:text-5xl font-black text-[#1B365D]">Meet Auxilink AI</h2>
+          <p className="text-lg text-slate-600 font-medium max-w-xl mx-auto leading-relaxed">We are replacing standard calculators with an intelligent engineering and science assistant built directly into iStud.</p>
+          <div className="p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm max-w-lg mx-auto text-left space-y-4">
+            <div className="text-xs font-bold text-slate-400 uppercase">Upcoming Auxilink Capabilities:</div>
+            <ul className="space-y-2 text-sm font-bold text-slate-700">
+              <li className="flex items-center gap-2">⚡ Automatic circuit & math step-by-step solver</li>
+              <li className="flex items-center gap-2">⚡ Instant flashcard generation from textbook PDFs</li>
+              <li className="flex items-center gap-2">⚡ Smart quiz generator tailored to your syllabus</li>
+            </ul>
+          </div>
         </main>
       )}
 
@@ -340,7 +442,6 @@ export default function Home() {
           </div>
         </main>
       )}
-
     </div>
   );
 }
