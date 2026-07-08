@@ -14,8 +14,13 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'study-hub' | 'auxilink-ai' | 'community'>('dashboard');
   const [user, setUser] = useState<any>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  
+  // --- PROFILE SETTINGS STATE ---
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [university, setUniversity] = useState('');
+  const [bio, setBio] = useState('');
 
   // --- STUDY HUB CORE STATE ---
   const [selectedTechnique, setSelectedTechnique] = useState<'active-recall' | 'feynman' | 'pomodoro' | 'blurting'>('active-recall');
@@ -54,7 +59,14 @@ export default function Home() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      if (user?.user_metadata?.display_name) setDisplayName(user.user_metadata.display_name);
+      
+      // Load all profile metadata
+      if (user?.user_metadata) {
+        if (user.user_metadata.display_name) setDisplayName(user.user_metadata.display_name);
+        if (user.user_metadata.avatar_url) setAvatarUrl(user.user_metadata.avatar_url);
+        if (user.user_metadata.university) setUniversity(user.user_metadata.university);
+        if (user.user_metadata.bio) setBio(user.user_metadata.bio);
+      }
 
       if (user) {
         const { data: folderData } = await supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
@@ -113,7 +125,17 @@ export default function Home() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const { data, error } = await supabase.auth.updateUser({ data: { display_name: displayName } });
+    
+    // Save all new fields to Supabase Auth Metadata
+    const { data, error } = await supabase.auth.updateUser({ 
+      data: { 
+        display_name: displayName,
+        avatar_url: avatarUrl,
+        university: university,
+        bio: bio
+      } 
+    });
+    
     if (error) alert("Error updating profile: " + error.message);
     else { setUser(data.user); setIsSettingsOpen(false); setProfileMenuOpen(false); }
   };
@@ -218,7 +240,11 @@ export default function Home() {
             {user ? (
               <div>
                 <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">
-                  <div className="w-6 h-6 rounded-full bg-[#1B365D] text-white flex items-center justify-center text-xs font-bold">{user.email?.charAt(0).toUpperCase()}</div>
+                  {user.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-[#1B365D]" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-[#1B365D] text-white flex items-center justify-center text-xs font-bold">{user.email?.charAt(0).toUpperCase()}</div>
+                  )}
                   <span className="hidden sm:inline text-sm font-bold text-[#1B365D] max-w-25 truncate">{user.user_metadata?.display_name || user.email}</span>
                 </button>
                 {profileMenuOpen && (
@@ -243,18 +269,59 @@ export default function Home() {
         ))}
       </div>
 
-      {/* PROFILE MODAL */}
+      {/* PROFILE SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="text-xl font-black text-[#1B365D]">Account Settings</h3>
               <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
-            <form onSubmit={handleUpdateProfile} className="p-6 space-y-4">
-              <div><label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Email Address</label><input type="text" value={user?.email} disabled className="w-full bg-slate-100 text-slate-500 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold cursor-not-allowed" /></div>
-              <div><label className="text-xs font-bold text-[#1B365D] uppercase tracking-wider mb-1 block">Display Name</label><input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="e.g., Engr. Benedict" className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div>
-              <div className="pt-4 flex gap-3"><button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 bg-slate-100 text-slate-600 px-4 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors">Cancel</button><button type="submit" className="flex-1 bg-[#1B365D] text-white px-4 py-3 rounded-xl font-black text-sm hover:bg-slate-800 transition-colors shadow-md">Save Changes</button></div>
+            
+            <form onSubmit={handleUpdateProfile} className="p-6 space-y-5">
+              
+              {/* Profile Avatar Section */}
+              <div className="flex items-center gap-4">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar Preview" className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 shadow-sm" onError={(e) => e.currentTarget.src = 'https://via.placeholder.com/150'} />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-blue-100 text-[#1B365D] flex items-center justify-center text-xl font-black shadow-sm">
+                    {user?.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-[#1B365D] uppercase tracking-wider mb-1 block">Avatar URL</label>
+                  <input type="url" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://example.com/my-photo.jpg" className="w-full bg-white border border-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                </div>
+              </div>
+
+              {/* Standard Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-[#1B365D] uppercase tracking-wider mb-1 block">Display Name</label>
+                  <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="e.g., Engr. Benedict" className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Email Address</label>
+                  <input type="text" value={user?.email} disabled className="w-full bg-slate-100 text-slate-500 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold cursor-not-allowed" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#1B365D] uppercase tracking-wider mb-1 block">University / Institution</label>
+                <input type="text" value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="e.g., Polytechnic University of the Philippines" className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#1B365D] uppercase tracking-wider mb-1 block">Bio / Academic Focus</label>
+                <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="e.g., 2nd Year Electronics Engineering Student" rows={3} className="w-full bg-white border border-slate-300 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none" />
+                <p className="text-xs text-slate-400 mt-2">This is the profile other scholars will see in the campus lounge.</p>
+              </div>
+
+              <div className="pt-4 flex gap-3 border-t border-slate-100">
+                <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 bg-slate-100 text-slate-600 px-4 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 bg-[#1B365D] text-white px-4 py-3 rounded-xl font-black text-sm hover:bg-slate-800 transition-colors shadow-md">Save Profile</button>
+              </div>
             </form>
           </div>
         </div>
@@ -387,7 +454,7 @@ export default function Home() {
                   {currentCardIndex >= flashcards.length ? (
                     <div className="bg-white rounded-4xl p-10 text-center shadow-xl border border-slate-200/80"><div className="text-6xl mb-4">🏆</div><h3 className="text-3xl font-black text-[#1B365D] mb-8">Deck Completed!</h3><button onClick={() => setCurrentCardIndex(0)} className="bg-[#1B365D] text-white font-bold px-8 py-4 rounded-2xl shadow-md">Restart Deck 🔄</button></div>
                   ) : (
-                    <div className="bg-white rounded-4xl min-h-100 flex flex-col justify-center items-center p-8 md:p-12 shadow-xl border border-slate-200/80 text-center relative overflow-hidden">
+                    <div className="bg-white rounded-4xl min-h-[400px] flex flex-col justify-center items-center p-8 md:p-12 shadow-xl border border-slate-200/80 text-center relative overflow-hidden">
                       <span className={`text-xs font-black uppercase tracking-widest mb-6 ${isCardFlipped ? 'text-emerald-500' : 'text-blue-500'}`}>{isCardFlipped ? 'Answer' : 'Question'}</span>
                       <h2 className="text-3xl md:text-4xl font-black text-[#1B365D] mb-12">{isCardFlipped ? flashcards[currentCardIndex].answer : flashcards[currentCardIndex].question}</h2>
                       <div className="w-full mt-auto pt-8 border-t border-slate-100 flex justify-center">
@@ -467,10 +534,10 @@ export default function Home() {
                       {/* Left: User's Blurt */}
                       <div className="bg-white rounded-4xl p-6 shadow-md border border-slate-200">
                         <h4 className="font-black text-[#1B365D] mb-4 border-b pb-2">Your Brain Dump</h4>
-                        <div className="whitespace-pre-wrap text-sm font-medium text-slate-700 bg-slate-50 p-4 rounded-xl min-h-75">{blurtingInput || "No notes taken."}</div>
+                        <div className="whitespace-pre-wrap text-sm font-medium text-slate-700 bg-slate-50 p-4 rounded-xl min-h-[300px]">{blurtingInput || "No notes taken."}</div>
                       </div>
                       {/* Right: Actual Deck for Self-Correction */}
-                      <div className="bg-white rounded-4xl p-6 shadow-md border border-slate-200 h-150 flex flex-col">
+                      <div className="bg-white rounded-4xl p-6 shadow-md border border-slate-200 h-[600px] flex flex-col">
                         <h4 className="font-black text-[#1B365D] mb-4 border-b pb-2 flex justify-between">
                           <span>Actual Deck</span>
                           <span className="text-xs text-emerald-500">Self-Correct Now</span>
