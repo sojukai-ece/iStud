@@ -215,11 +215,11 @@ export default function Home() {
       {/* --- CREATIVE ENGINEERING BACKGROUND --- */}
       <div className="fixed inset-0 z-[-1] bg-[#F8FAFC]">
         {/* Subtle Breadboard / Engineering Grid Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-60"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[24px_24px] opacity-60"></div>
         
         {/* Soft Ambient Glowing Nodes */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-400/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s' }}></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-indigo-400/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }}></div>
+        <div className="absolute top-[-10%] left-[-10%] w-160 h-160 bg-blue-400/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s' }}></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-160 h-160 bg-indigo-400/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }}></div>
       </div>
       
       {/* HEADER */}
@@ -286,8 +286,8 @@ export default function Home() {
 
       {/* PROFILE SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
-          <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden my-8 border border-white/20">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-4xl w-full max-w-lg shadow-2xl overflow-hidden my-8 border border-white/20">
             <div className="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h3 className="text-2xl font-black text-[#1B365D]">Account Profile</h3>
               <button onClick={() => setIsSettingsOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200/50 text-slate-500 hover:bg-red-100 hover:text-red-500 font-bold transition-colors">&times;</button>
@@ -384,7 +384,7 @@ export default function Home() {
                   { id: 'pomodoro', name: 'Pomodoro Timer', icon: '⏱️', desc: '25m focus / 5m breaks.' },
                   { id: 'blurting', name: 'Blurting Method', icon: '📝', desc: 'Brain dump from memory.' },
                 ].map((tech) => (
-                  <div key={tech.id} onClick={() => { setSelectedTechnique(tech.id as any); setSelectedFolder(null); }} className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 ${selectedTechnique === tech.id ? 'border-[#1B365D] bg-white shadow-xl shadow-blue-900/5 transform scale-105' : 'border-white/60 bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 hover:shadow-md'}`}>
+                  <div key={tech.id} onClick={() => { setSelectedTechnique(tech.id as any); setSelectedFolder(null); }} className={`p-6 rounded-4xl border-2 cursor-pointer transition-all duration-300 ${selectedTechnique === tech.id ? 'border-[#1B365D] bg-white shadow-xl shadow-blue-900/5 transform scale-105' : 'border-white/60 bg-white/60 backdrop-blur-sm hover:bg-white hover:border-slate-300 hover:shadow-md'}`}>
                     <div className="text-3xl mb-3">{tech.icon}</div>
                     <h4 className="font-black text-[#1B365D] text-lg">{tech.name}</h4>
                     <p className="text-sm text-slate-500 font-medium mt-1 leading-relaxed">{tech.desc}</p>
@@ -397,7 +397,7 @@ export default function Home() {
           {/* POMODORO TIMER MODE (No folder required) */}
           {selectedTechnique === 'pomodoro' && activeStudyMode === 'none' ? (
             <div className="bg-white/80 backdrop-blur-xl rounded-[3rem] p-10 md:p-20 text-center shadow-2xl border border-white relative overflow-hidden animate-fade-in">
-              <div className={`absolute inset-0 opacity-10 transition-colors duration-1000 ${pomodoroMode === 'work' ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent'}`}></div>
+              <div className={`absolute inset-0 opacity-10 transition-colors duration-1000 ${pomodoroMode === 'work' ? 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-indigo-500 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent'}`}></div>
               <div className="relative z-10">
                 <h3 className="text-xl font-black text-slate-400 uppercase tracking-[0.3em] mb-8">{pomodoroMode === 'work' ? 'Deep Focus Session' : 'Rest & Recover'}</h3>
                 <div className="text-8xl sm:text-[12rem] font-black text-[#1B365D] tracking-tighter tabular-nums mb-14 drop-shadow-sm">
@@ -466,7 +466,7 @@ export default function Home() {
                     <h3 className="text-3xl md:text-4xl font-black text-[#1B365D] mt-1">{selectedFolder.name}</h3>
                   </div>
                   
-                  <form onSubmit={handleAddFlashcard} className="flex flex-col gap-4 bg-slate-50/80 p-6 md:p-8 rounded-[2rem] border border-slate-200 relative overflow-hidden">
+                  <form onSubmit={handleAddFlashcard} className="flex flex-col gap-4 bg-slate-50/80 p-6 md:p-8 rounded-4xl border border-slate-200 relative overflow-hidden">
                     <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
                     <div className="relative z-10 space-y-4">
                       <input type="text" value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} required placeholder="Concept / Question (e.g. De Morgan's Theorem)" className="w-full bg-white border border-slate-200 px-5 py-4 rounded-2xl text-sm font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm" />
@@ -497,7 +497,7 @@ export default function Home() {
                   {currentCardIndex >= flashcards.length ? (
                     <div className="bg-white/90 backdrop-blur-xl rounded-[3rem] p-16 text-center shadow-2xl border border-white"><div className="text-7xl mb-6 drop-shadow-md">🏆</div><h3 className="text-4xl font-black text-[#1B365D] mb-10">Deck Completed!</h3><button onClick={() => setCurrentCardIndex(0)} className="bg-[#1B365D] text-white font-black px-10 py-5 rounded-2xl shadow-xl hover:scale-105 transition-transform text-lg">Restart Deck 🔄</button></div>
                   ) : (
-                    <div className="bg-white/90 backdrop-blur-xl rounded-[3rem] min-h-[500px] flex flex-col justify-center items-center p-10 md:p-16 shadow-2xl border border-white text-center relative overflow-hidden group">
+                    <div className="bg-white/90 backdrop-blur-xl rounded-[3rem] min-h-125 flex flex-col justify-center items-center p-10 md:p-16 shadow-2xl border border-white text-center relative overflow-hidden group">
                       <div className="absolute inset-0 bg-linear-to-b from-transparent to-slate-50/50 pointer-events-none"></div>
                       <span className={`relative z-10 text-xs font-black uppercase tracking-[0.2em] mb-8 px-4 py-1.5 rounded-full ${isCardFlipped ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>{isCardFlipped ? 'Answer' : 'Question'}</span>
                       <h2 className="relative z-10 text-4xl md:text-5xl font-black text-[#1B365D] mb-16 leading-tight drop-shadow-sm">{isCardFlipped ? flashcards[currentCardIndex].answer : flashcards[currentCardIndex].question}</h2>
@@ -571,7 +571,7 @@ export default function Home() {
                         value={blurtingInput} 
                         onChange={(e) => setBlurtingInput(e.target.value)} 
                         placeholder={isBlurtingActive ? "Start typing rapidly here..." : "Click 'Start Timer' to begin your blurting session."} 
-                        className="w-full h-[500px] bg-amber-50/50 border-2 border-slate-200 rounded-[2rem] p-8 text-slate-800 text-lg font-medium leading-relaxed focus:outline-none focus:border-amber-400 resize-none disabled:opacity-70 transition-all shadow-inner"
+                        className="w-full h-125 bg-amber-50/50 border-2 border-slate-200 rounded-4xl p-8 text-slate-800 text-lg font-medium leading-relaxed focus:outline-none focus:border-amber-400 resize-none disabled:opacity-70 transition-all shadow-inner"
                       />
                     </div>
                   ) : (
@@ -579,10 +579,10 @@ export default function Home() {
                       {/* Left: User's Blurt */}
                       <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-2xl border border-white">
                         <h4 className="text-2xl font-black text-[#1B365D] mb-6 border-b border-slate-100 pb-4">Your Brain Dump</h4>
-                        <div className="whitespace-pre-wrap text-base font-medium text-slate-700 bg-slate-50/80 p-6 rounded-3xl min-h-[400px] border border-slate-100">{blurtingInput || "No notes taken."}</div>
+                        <div className="whitespace-pre-wrap text-base font-medium text-slate-700 bg-slate-50/80 p-6 rounded-3xl min-h-100 border border-slate-100">{blurtingInput || "No notes taken."}</div>
                       </div>
                       {/* Right: Actual Deck for Self-Correction */}
-                      <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-2xl border border-white h-[700px] flex flex-col">
+                      <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-2xl border border-white h-175 flex flex-col">
                         <h4 className="text-2xl font-black text-[#1B365D] mb-6 border-b border-slate-100 pb-4 flex justify-between items-center">
                           <span>Actual Deck</span>
                           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-full">Self-Correct Now</span>
@@ -609,7 +609,7 @@ export default function Home() {
       {/* (Kept exactly as previous versions for stability) */}
       {activeTab === 'auxilink-ai' && (
         <main className="max-w-4xl mx-auto px-4 md:px-6 pt-24 text-center space-y-8 animate-fade-in relative z-10">
-          <div className="w-24 h-24 rounded-[2rem] bg-linear-to-tr from-[#1B365D] to-blue-500 text-white flex items-center justify-center text-5xl mx-auto shadow-2xl shadow-blue-900/20 transform hover:scale-110 transition-transform">🤖</div>
+          <div className="w-24 h-24 rounded-4xl bg-linear-to-tr from-[#1B365D] to-blue-500 text-white flex items-center justify-center text-5xl mx-auto shadow-2xl shadow-blue-900/20 transform hover:scale-110 transition-transform">🤖</div>
           <span className="bg-blue-100 text-blue-800 font-extrabold text-[10px] px-4 py-2 rounded-full uppercase tracking-[0.2em] shadow-sm">Module In Development</span>
           <h2 className="text-5xl sm:text-6xl font-black text-[#1B365D] tracking-tight">Meet Auxilink AI</h2>
           <p className="text-xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">We are replacing standard calculators with an intelligent engineering and science assistant built directly into iStud.</p>
@@ -618,13 +618,13 @@ export default function Home() {
 
       {activeTab === 'community' && (
         <main className="max-w-4xl mx-auto px-4 md:px-6 pt-6 md:pt-10 animate-fade-in h-[calc(100vh-140px)] md:h-auto relative z-10">
-          <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl flex flex-col h-full md:h-[750px] overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl flex flex-col h-full md:h-187.5 overflow-hidden">
             <div className="p-5 md:p-8 bg-linear-to-r from-[#1B365D] to-blue-900 text-white flex justify-between items-center shrink-0">
               <h3 className="text-xl md:text-2xl font-black">💬 Campus Lounge</h3>
               <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] md:text-xs px-3 md:px-4 py-1.5 rounded-full font-bold flex items-center gap-2 shadow-sm"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span> Live</span>
             </div>
             <div className="flex-1 p-5 md:p-8 overflow-y-auto space-y-5 bg-slate-50/50 flex flex-col">
-              {chatMessages.length === 0 ? <div className="m-auto text-center"><span className="text-5xl drop-shadow-sm">👋</span><p className="text-slate-500 font-bold mt-4 text-lg">No messages yet.</p></div> : chatMessages.map((msg) => { const isMe = user?.id === msg.user_id; return ( <div key={msg.id} className={`max-w-[85%] md:max-w-md p-4 md:p-5 rounded-[1.5rem] shadow-sm ${isMe ? 'bg-blue-50 border border-blue-100 self-end rounded-tr-sm' : 'bg-white border border-slate-100 self-start rounded-tl-sm'}`}> <div className="flex justify-between items-center mb-2 gap-2 md:gap-4"> <span className={`font-black text-[10px] md:text-xs uppercase tracking-wider ${isMe ? 'text-blue-700' : 'text-[#1B365D]'}`}>{isMe ? 'You' : msg.user_name}</span> <span className="text-[9px] md:text-[10px] font-bold text-slate-400 bg-white/50 px-2 py-0.5 rounded-md">{formatClock(msg.created_at)}</span> </div> <p className="text-sm md:text-base font-medium text-slate-700 leading-relaxed">{msg.text}</p> </div> ); })}
+              {chatMessages.length === 0 ? <div className="m-auto text-center"><span className="text-5xl drop-shadow-sm">👋</span><p className="text-slate-500 font-bold mt-4 text-lg">No messages yet.</p></div> : chatMessages.map((msg) => { const isMe = user?.id === msg.user_id; return ( <div key={msg.id} className={`max-w-[85%] md:max-w-md p-4 md:p-5 rounded-3xl shadow-sm ${isMe ? 'bg-blue-50 border border-blue-100 self-end rounded-tr-sm' : 'bg-white border border-slate-100 self-start rounded-tl-sm'}`}> <div className="flex justify-between items-center mb-2 gap-2 md:gap-4"> <span className={`font-black text-[10px] md:text-xs uppercase tracking-wider ${isMe ? 'text-blue-700' : 'text-[#1B365D]'}`}>{isMe ? 'You' : msg.user_name}</span> <span className="text-[9px] md:text-[10px] font-bold text-slate-400 bg-white/50 px-2 py-0.5 rounded-md">{formatClock(msg.created_at)}</span> </div> <p className="text-sm md:text-base font-medium text-slate-700 leading-relaxed">{msg.text}</p> </div> ); })}
             </div>
             <form onSubmit={handleSendMessage} className="p-4 md:p-6 bg-white border-t border-slate-100 flex gap-3 shrink-0">
               <input type="text" value={newChatInput} onChange={(e) => setNewChatInput(e.target.value)} placeholder={user ? "Type your message..." : "Log in to join the conversation!"} disabled={!user} className="flex-1 bg-slate-50 px-5 md:px-6 py-4 rounded-2xl text-sm font-medium outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 border border-slate-200 transition-all disabled:opacity-50" />
