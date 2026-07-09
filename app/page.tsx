@@ -299,7 +299,7 @@ export default function Home() {
     <div className="flex h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden">
       
       {/* --- SIDEBAR --- */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
+      <aside className="hidden md:flex flex-col w-65 bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
         {/* Logo Area */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
@@ -385,14 +385,14 @@ export default function Home() {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 md:ml-[260px] h-screen overflow-y-auto pb-24 md:pb-8 relative">
+      <main className="flex-1 md:ml-65 h-screen overflow-y-auto pb-24 md:pb-8 relative">
         
         {/* VIEW 1: HOME / DASHBOARD */}
         {activeTab === 'dashboard' && !selectedFolder && (
           <div className="max-w-5xl mx-auto px-6 py-8 md:py-12 animate-fade-in space-y-10">
             
             {/* Header: Greeting, Quote, and Streak */}
-            <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 items-center justify-between relative overflow-hidden">
+            <div className="bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
               
               <div className="flex-1 z-10">
@@ -418,17 +418,17 @@ export default function Home() {
             <div>
               <h2 className="text-lg md:text-xl font-extrabold text-[#0F172A] mb-5">Learning Progress</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-lg">📚</span> Cards Reviewed</h4>
                   <p className="text-3xl font-black text-[#0F172A]">{cardsReviewed}</p>
                 </div>
-                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-lg">🎯</span> Retention Accuracy</h4>
                   <p className={`text-3xl font-black ${getRetentionAccuracy() > 70 ? 'text-green-600' : 'text-orange-500'}`}>
                     {getRetentionAccuracy()}%
                   </p>
                 </div>
-                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-lg">⏱️</span> Total Study Time</h4>
                   <p className="text-3xl font-black text-blue-600">{getFormattedStudyTime()}</p>
                 </div>
@@ -479,7 +479,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-6 py-8 md:py-12 animate-fade-in">
              <button onClick={() => setSelectedFolder(null)} className="text-sm font-bold text-slate-500 hover:text-[#0F172A] flex items-center gap-2 mb-6">← Back to My Decks</button>
              
-             <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm mb-8">
+             <div className="bg-white p-8 rounded-4xl border border-slate-200 shadow-sm mb-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6 mb-6">
                   <div>
                     <h2 className="text-3xl font-black text-[#0F172A]">{selectedFolder.name}</h2>
@@ -535,7 +535,7 @@ export default function Home() {
                 <button onClick={() => { setCurrentCardIndex(0); setupActiveRecallCard(0); }} className="bg-[#0F172A] text-white font-bold px-8 py-4 rounded-xl shadow-md hover:bg-slate-800">Restart Study</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-slate-200">
+              <div className="bg-white rounded-4xl p-8 md:p-12 shadow-sm border border-slate-200">
                 <div className="mb-10 text-center">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-[#0F172A] leading-tight">
                     {flashcards[currentCardIndex].question}
@@ -608,7 +608,7 @@ export default function Home() {
                 <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-8 py-4 rounded-xl shadow-md hover:bg-slate-800 text-lg">Teach Again</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
+              <div className="bg-white rounded-4xl p-8 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
                 <div className="mb-8 pb-8 border-b border-slate-100">
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-2">Explain this concept</span>
                   <h2 className="text-3xl md:text-4xl font-black text-[#0F172A]">{flashcards[currentCardIndex].question}</h2>
@@ -644,7 +644,7 @@ export default function Home() {
 
         {activeTab === 'community' && (
           <div className="max-w-4xl mx-auto px-6 py-8 md:py-12 animate-fade-in h-full flex flex-col pb-20">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[600px]">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-150">
               <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                 <h3 className="text-xl font-black text-[#0F172A]">Campus Lounge</h3>
                 <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live</span>
@@ -664,7 +664,7 @@ export default function Home() {
 
       {/* PROFILE SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden my-8">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="text-xl font-black text-[#0F172A]">Profile Settings</h3>
