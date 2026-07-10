@@ -202,6 +202,7 @@ export default function Home() {
     } else if (blurtingTimeLeft === 0 && isBlurtingActive) {
       setIsBlurtingActive(false);
       setBlurtingFinished(true);
+      setCardsReviewed(prev => prev + 1);
     }
     return () => clearInterval(interval);
   }, [isBlurtingActive, blurtingTimeLeft]);
@@ -362,7 +363,7 @@ export default function Home() {
     setCurrentCardIndex(0); setIsCardFlipped(false);
     if (selectedTechnique === 'active-recall') setupActiveRecallCard(0);
     setFeynmanInput(''); setBlurtingInput(''); setBlurtingTimeLeft(300);
-    setIsBlurtingActive(selectedTechnique === 'blurting'); setBlurtingFinished(false);
+    setIsBlurtingActive(false); setBlurtingFinished(false);
   };
 
   const nextCard = () => {
@@ -424,7 +425,7 @@ export default function Home() {
       </div>
 
       {/* --- SIDEBAR (Desktop) --- */}
-      <aside className="hidden md:flex flex-col w-65 bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
+      <aside className="hidden md:flex flex-col w-[260px] bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
             <div className="text-3xl font-black tracking-tighter text-[#0F172A]">
@@ -493,13 +494,13 @@ export default function Home() {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 md:ml-65 h-full overflow-y-auto pb-28 md:pb-8 relative">
+      <main className="flex-1 md:ml-[260px] h-full overflow-y-auto pb-28 md:pb-8 relative">
         
         {/* VIEW 1: HOME / DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in space-y-6 md:space-y-10">
             
-            <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col xl:flex-row gap-6 md:gap-8 items-center justify-between relative overflow-hidden">
+            <div className="bg-white rounded-3xl md:rounded-[2rem] p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col xl:flex-row gap-6 md:gap-8 items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
               
               <div className="flex-1 z-10 w-full">
@@ -532,17 +533,17 @@ export default function Home() {
             <div>
               <h2 className="text-lg md:text-xl font-extrabold text-[#0F172A] mb-4 md:mb-5">Learning Progress</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
-                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">📚</span> Cards Reviewed</h4>
                   <p className="text-2xl md:text-3xl font-black text-[#0F172A]">{cardsReviewed}</p>
                 </div>
-                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">🎯</span> Retention Accuracy</h4>
                   <p className={`text-2xl md:text-3xl font-black ${getRetentionAccuracy() > 70 ? 'text-green-600' : 'text-orange-500'}`}>
                     {getRetentionAccuracy()}%
                   </p>
                 </div>
-                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">⏱️</span> Total Study Time</h4>
                   <p className="text-2xl md:text-3xl font-black text-blue-600">{getFormattedStudyTime()}</p>
                 </div>
@@ -573,7 +574,7 @@ export default function Home() {
                   </div>
               ) : (
                 folders.map((folder, idx) => (
-                  <div key={folder.id} onClick={() => openFolder(folder)} className="bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden p-5 md:p-6 pl-7 md:pl-8 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:border-blue-200 transition-all group flex flex-col justify-between min-h-30">
+                  <div key={folder.id} onClick={() => openFolder(folder)} className="bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden p-5 md:p-6 pl-7 md:pl-8 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:border-blue-200 transition-all group flex flex-col justify-between min-h-[120px]">
                     <div className={`absolute left-0 top-0 bottom-0 w-2.5 md:w-3 ${getDeckColor(idx)}`}></div>
                     <div className="mb-4 pr-2">
                       <h3 className="font-black text-[#0F172A] text-base md:text-lg group-hover:text-blue-600 transition-colors line-clamp-2">{folder.name}</h3>
@@ -595,7 +596,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in">
              <button onClick={() => setSelectedFolder(null)} className="text-xs md:text-sm font-bold text-slate-500 hover:text-[#0F172A] flex items-center gap-2 mb-4 md:mb-6">← Back to Library</button>
              
-             <div className="bg-white p-5 md:p-8 rounded-3xl md:rounded-4xl border border-slate-200 shadow-sm mb-6 md:mb-8 relative">
+             <div className="bg-white p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-200 shadow-sm mb-6 md:mb-8 relative">
                 
                 {/* Deck Delete Button */}
                 <button onClick={() => handleDeleteFolder(selectedFolder.id)} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete Deck">
@@ -626,7 +627,7 @@ export default function Home() {
                      <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 w-full md:w-auto">Add Card</button>
                   </form>
                   
-                  {/* NEW PDF UPLOAD UI */}
+                  {/* PDF UPLOAD UI */}
                   <div className="flex items-center gap-4 my-2 opacity-70">
                     <div className="h-px bg-slate-200 flex-1"></div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">OR</span>
@@ -672,7 +673,7 @@ export default function Home() {
         {activeTab === 'focus-hub' && (
           <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-10">
             
-            <div className="flex-1 bg-white rounded-4xl p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="flex-1 bg-white rounded-[2rem] p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
               <div className={`absolute inset-0 opacity-[0.03] transition-colors duration-1000 ${pomodoroMode === 'work' ? 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-blue-900 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-green-900 via-transparent to-transparent'}`}></div>
               
               <div className="relative z-10 w-full flex flex-col items-center">
@@ -716,7 +717,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="w-full lg:w-100 flex flex-col h-100 md:h-125 lg:h-auto bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="w-full lg:w-[400px] flex flex-col h-[400px] md:h-[500px] lg:h-auto bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
               <div className="p-5 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h3 className="text-base md:text-lg font-black text-[#0F172A]">Session Tasks</h3>
                 <span className="text-[10px] md:text-xs font-bold text-slate-400">{tasks.filter(t=>t.completed).length} / {tasks.length} Done</span>
@@ -764,7 +765,7 @@ export default function Home() {
                 <button onClick={() => { setCurrentCardIndex(0); setupActiveRecallCard(0); }} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 text-sm md:text-base w-full sm:w-auto">Restart Study</button>
               </div>
             ) : (
-              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-sm border border-slate-200">
+              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-200">
                 <div className="mb-8 md:mb-10 text-center">
                   <h2 className="text-xl md:text-3xl font-extrabold text-[#0F172A] leading-tight">
                     {flashcards[currentCardIndex].question}
@@ -837,7 +838,7 @@ export default function Home() {
                 <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 text-sm md:text-lg w-full sm:w-auto">Teach Again</button>
               </div>
             ) : (
-              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
+              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
                 <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-slate-100">
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-1 md:mb-2">Explain this concept</span>
                   <h2 className="text-2xl md:text-4xl font-black text-[#0F172A]">{flashcards[currentCardIndex].question}</h2>
@@ -862,6 +863,88 @@ export default function Home() {
           </div>
         )}
 
+        {/* BLURTING METHOD UI */}
+        {selectedFolder && activeStudyMode === 'blurting' && activeTab === 'decks' && (
+          <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12 animate-fade-in relative z-10">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <button onClick={() => setActiveStudyMode('none')} className="text-xs md:text-sm font-bold text-slate-500 hover:text-red-500 bg-white border border-slate-200 px-4 md:px-5 py-2 md:py-2.5 rounded-full shadow-sm">Exit Session</button>
+              <span className="font-bold text-xs md:text-sm text-slate-400">{currentCardIndex + 1} / {flashcards.length}</span>
+            </div>
+            
+            {currentCardIndex >= flashcards.length ? (
+              <div className="bg-white rounded-2xl md:rounded-3xl p-10 md:p-16 text-center shadow-sm border border-slate-200">
+                <div className="text-5xl md:text-6xl mb-4 md:mb-6 drop-shadow-md">🎓</div>
+                <h3 className="text-2xl md:text-3xl font-black text-[#0F172A] mb-6 md:mb-8">Mastery Complete!</h3>
+                <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 text-sm md:text-lg w-full sm:w-auto">Study Again</button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden flex flex-col">
+                <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-500 block mb-1 md:mb-2">Blurt everything you know</span>
+                    <h2 className="text-2xl md:text-4xl font-black text-[#0F172A]">{flashcards[currentCardIndex].question}</h2>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 shrink-0">
+                    <span className="text-2xl font-black tabular-nums text-[#0F172A]">{formatClock(blurtingTimeLeft)}</span>
+                    {!blurtingFinished && (
+                      <button onClick={() => setIsBlurtingActive(!isBlurtingActive)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-white font-bold transition-colors ${isBlurtingActive ? 'bg-red-500 hover:bg-red-600' : 'bg-teal-500 hover:bg-teal-600'}`}>
+                        {isBlurtingActive ? '⏸' : '▶'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {!blurtingFinished ? (
+                  <>
+                    <textarea 
+                      value={blurtingInput} 
+                      onChange={(e) => setBlurtingInput(e.target.value)} 
+                      disabled={!isBlurtingActive}
+                      placeholder={isBlurtingActive ? "Start typing everything you can remember..." : "Click the play button on the timer to start blurting!"} 
+                      className="w-full h-40 md:h-64 bg-slate-50/80 border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-6 text-slate-700 text-base md:text-lg font-medium focus:outline-none focus:border-teal-400 focus:bg-white resize-none mb-6 md:mb-8 transition-all disabled:opacity-50"
+                    />
+                    <button onClick={() => { setIsBlurtingActive(false); setBlurtingFinished(true); setCardsReviewed(prev => prev + 1); }} disabled={!blurtingInput.trim() && blurtingTimeLeft > 0} className="w-full bg-teal-600 text-white font-bold text-sm md:text-lg px-6 md:px-8 py-4 md:py-5 rounded-xl md:rounded-2xl hover:bg-teal-700 disabled:opacity-50 transition-all">
+                      Finish & Compare 🔍
+                    </button>
+                  </>
+                ) : (
+                  <div className="animate-fade-in flex flex-col gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* User's Blurt */}
+                      <div className="bg-slate-50 p-5 md:p-8 rounded-2xl md:rounded-3xl border border-slate-200">
+                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 block mb-2 md:mb-3">Your Notes</span>
+                        <p className="font-medium text-slate-700 text-sm md:text-base leading-relaxed whitespace-pre-wrap">{blurtingInput || "No notes written."}</p>
+                      </div>
+                      {/* Actual Answer */}
+                      <div className="bg-teal-50 p-5 md:p-8 rounded-2xl md:rounded-3xl border border-teal-100">
+                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-teal-600 block mb-2 md:mb-3">Actual Answer</span>
+                        <p className="font-bold text-teal-900 text-base md:text-lg leading-relaxed">{flashcards[currentCardIndex].answer}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
+                      <button onClick={() => {
+                        setCorrectAnswers(prev => prev + 1);
+                        setBlurtingFinished(false);
+                        setBlurtingInput('');
+                        setBlurtingTimeLeft(300);
+                        nextCard();
+                      }} className="flex-1 bg-[#0F172A] text-white font-bold text-sm md:text-base px-6 py-4 rounded-xl hover:bg-slate-800 transition-colors">I Got It Right</button>
+                      
+                      <button onClick={() => {
+                        setBlurtingFinished(false);
+                        setBlurtingInput('');
+                        setBlurtingTimeLeft(300);
+                        nextCard();
+                      }} className="flex-1 bg-white border border-slate-200 text-slate-600 font-bold text-sm md:text-base px-6 py-4 rounded-xl hover:bg-slate-50 transition-colors">Needs Work</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* --- AUXILINK AI --- */}
         {activeTab === 'auxilink-ai' && (
           <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 md:py-24 text-center animate-fade-in">
@@ -874,7 +957,7 @@ export default function Home() {
         {/* --- COMMUNITY CHAT --- */}
         {activeTab === 'community' && (
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in h-full flex flex-col">
-            <div className="bg-white rounded-3xl md:rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[60vh] md:min-h-150">
+            <div className="bg-white rounded-[1.5rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[60vh] md:min-h-[600px]">
               <div className="p-4 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Campus Lounge</h3>
                 <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-bold flex items-center gap-1.5 md:gap-2"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></span> Live</span>
@@ -894,7 +977,7 @@ export default function Home() {
 
       {/* PROFILE SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden my-8">
             <div className="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Profile Settings</h3>
