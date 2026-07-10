@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 // --- TYPES ---
 interface Folder { id: string; name: string; user_id: string; }
 interface Flashcard { id: string; question: string; answer: string; }
-interface ChatMessage { id: string; user_id: string; user_name: string; text: string; created_at: string; }
+interface ChatMessage { id: string; user_id: string; user_name: string; avatar_url?: string; text: string; created_at: string; }
 interface Task { id: string; text: string; completed: boolean; }
 
 // --- INSPIRATIONAL QUOTES ---
@@ -29,20 +29,24 @@ const Icons = {
   AI: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>,
   Chat: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
   Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
-  File: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  File: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+  Camera: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>,
+  LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
 };
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'decks' | 'focus-hub' | 'auxilink-ai' | 'community'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'decks' | 'focus-hub' | 'auxilink-ai' | 'community' | 'profile'>('dashboard');
   const [user, setUser] = useState<any>(null);
   const [dailyQuote, setDailyQuote] = useState('');
   
   // --- PROFILE SETTINGS STATE ---
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [university, setUniversity] = useState('');
+  const [course, setCourse] = useState('');
   const [bio, setBio] = useState('');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // --- STUDY HUB CORE STATE ---
   const [selectedTechnique, setSelectedTechnique] = useState<'active-recall' | 'feynman' | 'blurting'>('active-recall');
@@ -110,6 +114,7 @@ export default function Home() {
         if (user.user_metadata.display_name) setDisplayName(user.user_metadata.display_name);
         if (user.user_metadata.avatar_url) setAvatarUrl(user.user_metadata.avatar_url);
         if (user.user_metadata.university) setUniversity(user.user_metadata.university);
+        if (user.user_metadata.course) setCourse(user.user_metadata.course);
         if (user.user_metadata.bio) setBio(user.user_metadata.bio);
       }
 
@@ -210,7 +215,7 @@ export default function Home() {
   // --- DATABASE & ACTIONS ---
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    setUser(null); setFolders([]); setIsSettingsOpen(false);
+    setUser(null); setFolders([]); setActiveTab('dashboard');
     setCardsReviewed(0); setCorrectAnswers(0); setStudyTimeSeconds(0); setTasks([]);
   };
 
@@ -218,10 +223,43 @@ export default function Home() {
     e.preventDefault();
     if (!user) return;
     const { data, error } = await supabase.auth.updateUser({ 
-      data: { display_name: displayName, avatar_url: avatarUrl, university: university, bio: bio } 
+      data: { display_name: displayName, avatar_url: avatarUrl, university: university, course: course, bio: bio } 
     });
     if (error) alert("Error updating profile: " + error.message);
-    else { setUser(data.user); setIsSettingsOpen(false); }
+    else { 
+      setUser(data.user); 
+      alert("Profile updated successfully!"); 
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    
+    setIsUploadingAvatar(true);
+    
+    // Immediate UI Preview Fallback (ObjectURL)
+    const objectUrl = URL.createObjectURL(file);
+    setAvatarUrl(objectUrl);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      
+      // Assumes a Supabase storage bucket named 'avatars' exists and is public
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file);
+      
+      if (!uploadError) {
+        const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+        setAvatarUrl(data.publicUrl);
+        await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl } });
+      }
+    } catch (err) {
+      console.warn("Avatar bucket not configured properly, using local preview for session.");
+      // In a real scenario without the bucket, we update the metadata with a base64 string or just keep the object URL for the session.
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const openFolder = async (folder: Folder) => {
@@ -268,42 +306,48 @@ export default function Home() {
     const file = e.target.files?.[0];
     if (!file || !selectedFolder || !user) return;
 
-    // 1. Enter processing state (UI Feedback)
     setIsUploadingPDF(true);
-
-    // 2. Simulate Backend AI Processing (NLP Extraction)
     setTimeout(async () => {
-      // Mock generated flashcards from the theoretical parser
       const generatedCards = [
         { folder_id: selectedFolder.id, user_id: user.id, question: `What is the primary thesis of ${file.name}?`, answer: "Derived automatically from the document's abstract." },
         { folder_id: selectedFolder.id, user_id: user.id, question: "Define the core concept introduced in Chapter 1.", answer: "The foundational principle required for subsequent analysis." },
         { folder_id: selectedFolder.id, user_id: user.id, question: "What is the key formula or metric mentioned?", answer: "Derived value based on the PDF's internal tables." }
       ];
 
-      // Insert mock cards into database to complete the simulation loop
       const { data, error } = await supabase.from('flashcards').insert(generatedCards).select();
+      if (!error && data) setFlashcards([...data, ...flashcards]);
+      else if (error) alert("Error generating cards: " + error.message);
       
-      if (!error && data) {
-        setFlashcards([...data, ...flashcards]);
-      } else if (error) {
-        alert("Error generating cards: " + error.message);
-      }
-      
-      // Reset State
       setIsUploadingPDF(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
-    }, 3500); // Simulate a 3.5 second processing time
+    }, 3500); 
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChatInput.trim() || !user) return;
+    
     const senderName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Guest Scholar';
     const messageToSend = newChatInput;
     setNewChatInput('');
-    const tempMessage: ChatMessage = { id: Date.now().toString(), user_id: user.id, user_name: senderName, text: messageToSend, created_at: new Date().toISOString() };
+    
+    // Add avatar_url to the message payload
+    const tempMessage: ChatMessage = { 
+      id: Date.now().toString(), 
+      user_id: user.id, 
+      user_name: senderName, 
+      avatar_url: avatarUrl,
+      text: messageToSend, 
+      created_at: new Date().toISOString() 
+    };
+    
     setChatMessages((prev) => [...prev, tempMessage]);
-    await supabase.from('community_messages').insert([{ user_id: user.id, user_name: senderName, text: messageToSend }]);
+    await supabase.from('community_messages').insert([{ 
+      user_id: user.id, 
+      user_name: senderName, 
+      avatar_url: avatarUrl,
+      text: messageToSend 
+    }]);
   };
 
   // --- TASKS HUB ACTIONS ---
@@ -313,12 +357,8 @@ export default function Home() {
     setTasks([{ id: Date.now().toString(), text: newTaskInput, completed: false }, ...tasks]);
     setNewTaskInput('');
   };
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-  };
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id));
-  };
+  const toggleTask = (id: string) => { setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)); };
+  const deleteTask = (id: string) => { setTasks(tasks.filter(t => t.id !== id)); };
 
   const handleWorkTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = parseInt(e.target.value);
@@ -412,9 +452,9 @@ export default function Home() {
           </div>
         </div>
         {user ? (
-          <button onClick={() => setIsSettingsOpen(true)} className="flex items-center active:scale-95 transition-transform">
-            {user.user_metadata?.avatar_url ? (
-              <img src={user.user_metadata.avatar_url} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm" />
+          <button onClick={() => setActiveTab('profile')} className={`flex items-center active:scale-95 transition-transform rounded-full border-2 ${activeTab === 'profile' ? 'border-blue-600 p-0.5' : 'border-transparent'}`}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm" />
             ) : (
               <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold border border-slate-200 shadow-sm">{user.email?.charAt(0).toUpperCase()}</div>
             )}
@@ -452,13 +492,13 @@ export default function Home() {
           </button>
           
           {user ? (
-            <button onClick={() => setIsSettingsOpen(true)} className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-colors text-slate-500 hover:bg-slate-50 hover:text-slate-800 relative mt-2 border border-slate-100">
-              {user.user_metadata?.avatar_url ? (
-                <img src={user.user_metadata.avatar_url} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+            <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-colors relative mt-2 border ${activeTab === 'profile' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'border-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold">{user.email?.charAt(0).toUpperCase()}</div>
               )}
-              Profile
+              My Profile
               <span className="absolute right-4 top-3.5 bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{activeStreak}🔥</span>
             </button>
           ) : (
@@ -546,6 +586,117 @@ export default function Home() {
                 <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">⏱️</span> Total Study Time</h4>
                   <p className="text-2xl md:text-3xl font-black text-blue-600">{getFormattedStudyTime()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PROFILE HUB (NEW TAB) */}
+        {activeTab === 'profile' && user && (
+          <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-10">
+            
+            {/* Left Column: ID Card & Stats */}
+            <div className="w-full lg:w-1/3 flex flex-col gap-6">
+              
+              {/* Scholar ID Card */}
+              <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden relative">
+                <div className="h-32 bg-linear-to-r from-blue-600 to-indigo-700 relative">
+                  <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                </div>
+                
+                <div className="px-6 pb-8 pt-0 flex flex-col items-center relative">
+                  
+                  {/* Interactive Avatar */}
+                  <div 
+                    className="w-28 h-28 rounded-full border-4 border-white shadow-md bg-white -mt-14 mb-4 relative group cursor-pointer overflow-hidden z-10 flex items-center justify-center"
+                    onClick={() => avatarInputRef.current?.click()}
+                  >
+                    {isUploadingAvatar ? (
+                       <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    ) : avatarUrl ? (
+                      <img src={avatarUrl} alt="User Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-4xl font-black text-[#0F172A]">{user.email?.charAt(0).toUpperCase()}</span>
+                    )}
+                    
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white">
+                      <Icons.Camera />
+                      <span className="text-[9px] font-bold uppercase mt-1">Upload</span>
+                    </div>
+                  </div>
+                  
+                  <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={handleAvatarUpload} />
+
+                  <h2 className="text-2xl font-black text-[#0F172A] text-center leading-tight">
+                    {displayName || user.email?.split('@')[0]}
+                  </h2>
+                  <p className="text-sm font-bold text-blue-600 mt-1">{course || 'Electronics Engineering'}</p>
+                  <p className="text-xs font-medium text-slate-500 mt-0.5 text-center px-4">
+                    {university || 'Polytechnic University of the Philippines'}
+                  </p>
+
+                  <div className={`mt-6 w-full rounded-2xl p-4 flex items-center justify-between border ${getAcademicRank().bg} border-transparent`}>
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">{getAcademicRank().icon}</div>
+                      <div>
+                        <p className={`text-[9px] font-black uppercase tracking-widest ${getAcademicRank().color} opacity-70`}>Rank</p>
+                        <p className={`text-sm font-bold ${getAcademicRank().color}`}>{getAcademicRank().title}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <button onClick={handleSignOut} className="bg-white border border-red-200 text-red-600 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50 transition-colors shadow-sm">
+                <Icons.LogOut /> Sign Out
+              </button>
+            </div>
+
+            {/* Right Column: Settings & Full Stats */}
+            <div className="flex-1 flex flex-col gap-6">
+              <div className="bg-white rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm">
+                <h3 className="text-xl font-black text-[#0F172A] mb-6">Profile Settings</h3>
+                <form onSubmit={handleUpdateProfile} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2 ml-1">Display Name</label>
+                      <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="e.g. Juan Dela Cruz" className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2 ml-1">Course / Major</label>
+                      <input type="text" value={course} onChange={(e) => setCourse(e.target.value)} placeholder="e.g. Electronics Engineering" className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2 ml-1">University</label>
+                    <input type="text" value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="e.g. Polytechnic University of the Philippines" className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2 ml-1">Bio / Study Goals</label>
+                    <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Share a bit about yourself or your academic goals..." className="w-full h-28 bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl text-sm font-medium outline-none focus:border-blue-500 focus:bg-white resize-none transition-colors" />
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button type="submit" className="bg-[#0F172A] text-white px-8 py-3.5 rounded-xl font-bold text-sm shadow-md hover:bg-slate-800 transition-colors w-full md:w-auto">
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Detailed Stats Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-orange-50 border border-orange-100 p-5 rounded-3xl">
+                  <div className="text-2xl mb-2">🔥</div>
+                  <p className="text-[10px] font-extrabold text-orange-800 uppercase tracking-widest mb-1">Active Streak</p>
+                  <p className="text-2xl font-black text-orange-600">{activeStreak} Days</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 p-5 rounded-3xl">
+                  <div className="text-2xl mb-2">⏱️</div>
+                  <p className="text-[10px] font-extrabold text-blue-800 uppercase tracking-widest mb-1">Focus Time</p>
+                  <p className="text-2xl font-black text-blue-600">{getFormattedStudyTime()}</p>
                 </div>
               </div>
             </div>
@@ -962,9 +1113,36 @@ export default function Home() {
                 <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Campus Lounge</h3>
                 <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-bold flex items-center gap-1.5 md:gap-2"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></span> Live</span>
               </div>
-              <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4 bg-[#F8FAFC]">
-                {chatMessages.length === 0 ? <p className="text-center text-slate-400 font-bold mt-10 text-sm md:text-base">No messages yet.</p> : chatMessages.map((msg) => { const isMe = user?.id === msg.user_id; return ( <div key={msg.id} className={`max-w-[90%] md:max-w-md p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm ${isMe ? 'bg-[#0F172A] text-white self-end rounded-tr-sm ml-auto' : 'bg-white border border-slate-200 text-[#0F172A] self-start rounded-tl-sm'}`}> <div className="flex justify-between items-center mb-1 gap-4"> <span className={`font-bold text-[9px] md:text-[10px] uppercase tracking-wider ${isMe ? 'text-slate-300' : 'text-slate-500'}`}>{isMe ? 'You' : msg.user_name}</span> </div> <p className="text-sm md:text-base font-medium leading-relaxed">{msg.text}</p> </div> ); })}
+              
+              <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-5 bg-[#F8FAFC]">
+                {chatMessages.length === 0 ? (
+                  <p className="text-center text-slate-400 font-bold mt-10 text-sm md:text-base">No messages yet.</p>
+                ) : (
+                  chatMessages.map((msg) => { 
+                    const isMe = user?.id === msg.user_id; 
+                    return ( 
+                      <div key={msg.id} className={`flex items-end gap-2 md:gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                        {/* Avatar Rendering in Chat */}
+                        {!isMe && (
+                          msg.avatar_url ? (
+                            <img src={msg.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-300 text-white flex items-center justify-center text-[10px] font-bold shrink-0">{msg.user_name.charAt(0).toUpperCase()}</div>
+                          )
+                        )}
+                        
+                        <div className={`max-w-[85%] md:max-w-md p-3 md:p-4 rounded-2xl shadow-sm flex flex-col ${isMe ? 'bg-[#0F172A] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm'}`}> 
+                          <span className={`font-bold text-[9px] md:text-[10px] uppercase tracking-wider mb-1 ${isMe ? 'text-slate-400 text-right' : 'text-slate-400'}`}>
+                            {isMe ? 'You' : msg.user_name}
+                          </span> 
+                          <p className="text-sm md:text-base font-medium leading-relaxed">{msg.text}</p> 
+                        </div> 
+                      </div>
+                    ); 
+                  })
+                )}
               </div>
+              
               <form onSubmit={handleSendMessage} className="p-3 md:p-4 bg-white border-t border-slate-100 flex gap-2 shrink-0">
                 <input type="text" value={newChatInput} onChange={(e) => setNewChatInput(e.target.value)} placeholder={user ? "Type a message..." : "Log in to chat!"} disabled={!user} className="flex-1 bg-slate-50 px-4 md:px-5 py-2.5 md:py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-400 border border-slate-200 disabled:opacity-50" />
                 <button type="submit" disabled={!user || !newChatInput.trim()} className="bg-blue-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold text-sm hover:bg-blue-700 disabled:opacity-50 shrink-0">Send</button>
@@ -974,32 +1152,6 @@ export default function Home() {
         )}
 
       </main>
-
-      {/* PROFILE SETTINGS MODAL */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden my-8">
-            <div className="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Profile Settings</h3>
-              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
-            </div>
-            <form onSubmit={handleUpdateProfile} className="p-5 md:p-6 space-y-4">
-              <div>
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">Display Name</label>
-                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">University</label>
-                <input type="text" value={university} onChange={(e) => setUniversity(e.target.value)} className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500" />
-              </div>
-              <div className="pt-4 flex gap-2">
-                <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 bg-white border border-slate-200 text-slate-600 py-3 rounded-xl font-bold text-sm hover:bg-slate-50">Cancel</button>
-                <button type="submit" className="flex-1 bg-[#0F172A] text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800">Save</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
