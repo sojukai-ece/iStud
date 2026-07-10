@@ -42,11 +42,6 @@ export default function Home() {
   const [newAnswer, setNewAnswer] = useState('');
   const [isAddingFolder, setIsAddingFolder] = useState(false);
 
-  // --- ACTUAL STATISTICS TRACKING ---
-  const [cardsReviewed, setCardsReviewed] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [studyTimeSeconds, setStudyTimeSeconds] = useState(0);
-
   // --- ACTIVE STUDY MODES STATE ---
   const [activeStudyMode, setActiveStudyMode] = useState<'none' | 'active-recall' | 'feynman' | 'blurting'>('none');
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -98,15 +93,6 @@ export default function Home() {
       }
 
       if (user) {
-        // Load stats from local storage based on user ID
-        const savedStats = localStorage.getItem(`istud_stats_${user.id}`);
-        if (savedStats) {
-          const parsed = JSON.parse(savedStats);
-          setCardsReviewed(parsed.cardsReviewed || 0);
-          setCorrectAnswers(parsed.correctAnswers || 0);
-          setStudyTimeSeconds(parsed.studyTimeSeconds || 0);
-        }
-
         const { data: folderData } = await supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
         if (folderData) setFolders(folderData);
       }
@@ -131,30 +117,7 @@ export default function Home() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // --- STATS PERSISTENCE EFFECT ---
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(`istud_stats_${user.id}`, JSON.stringify({
-        cardsReviewed,
-        correctAnswers,
-        studyTimeSeconds
-      }));
-    }
-  }, [cardsReviewed, correctAnswers, studyTimeSeconds, user]);
-
-  // --- STUDY TIME TRACKER EFFECT ---
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    // Track time if a study mode is active or the pomodoro timer is running
-    if (activeStudyMode !== 'none' || pomodoroIsActive) {
-      timer = setInterval(() => {
-        setStudyTimeSeconds(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [activeStudyMode, pomodoroIsActive]);
-
-  // --- POMODORO TIMERS EFFECT ---
+  // --- TIMERS EFFECT ---
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (pomodoroIsActive && pomodoroTime > 0) {
@@ -181,7 +144,6 @@ export default function Home() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null); setFolders([]); setIsSettingsOpen(false);
-    setCardsReviewed(0); setCorrectAnswers(0); setStudyTimeSeconds(0);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -233,9 +195,7 @@ export default function Home() {
     await supabase.from('community_messages').insert([{ user_id: user.id, user_name: senderName, text: messageToSend }]);
   };
 
-  // --- STATISTICAL HANDLERS & HELPERS ---
   const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
-  
   const setupActiveRecallCard = (index: number) => {
     if (flashcards.length === 0) return;
     const correctOption = flashcards[index].answer;
@@ -244,24 +204,6 @@ export default function Home() {
     setCurrentOptions(shuffleArray([correctOption, ...wrongOptions]));
     setSelectedAnswer(null);
     setIsAnswerChecked(false);
-  };
-
-  const handleCheckAnswer = () => {
-    setIsAnswerChecked(true);
-    const isCorrect = selectedAnswer === flashcards[currentCardIndex].answer;
-    
-    // Update Stats
-    setCardsReviewed(prev => prev + 1);
-    if (isCorrect) {
-      setCorrectAnswers(prev => prev + 1);
-    }
-  };
-
-  const handleFeynmanCheck = () => {
-    setIsCardFlipped(true);
-    // Count Feynman interactions as reviews, grading it as correct for stats balance
-    setCardsReviewed(prev => prev + 1);
-    setCorrectAnswers(prev => prev + 1); 
   };
 
   const launchStudyMode = () => {
@@ -280,26 +222,12 @@ export default function Home() {
     if (activeStudyMode === 'active-recall' && nextIdx < flashcards.length) setupActiveRecallCard(nextIdx);
   };
 
-  // Formatters for the Stats UI
-  const getRetentionAccuracy = () => {
-    if (cardsReviewed === 0) return 0;
-    return Math.round((correctAnswers / cardsReviewed) * 100);
-  };
-
-  const getFormattedStudyTime = () => {
-    if (studyTimeSeconds < 60) return `${studyTimeSeconds} sec`;
-    const mins = Math.floor(studyTimeSeconds / 60);
-    if (mins < 60) return `${mins} min`;
-    const hrs = (mins / 60).toFixed(1);
-    return `${hrs} hrs`;
-  };
-
   // ---------------- UI RENDER ----------------
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden">
       
       {/* --- SIDEBAR --- */}
-      <aside className="hidden md:flex flex-col w-65 bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
+      <aside className="hidden md:flex flex-col w-[260px] bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
         {/* Logo Area */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
@@ -385,14 +313,14 @@ export default function Home() {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 md:ml-65 h-screen overflow-y-auto pb-24 md:pb-8 relative">
+      <main className="flex-1 md:ml-[260px] h-screen overflow-y-auto pb-24 md:pb-8 relative">
         
         {/* VIEW 1: HOME / DASHBOARD */}
         {activeTab === 'dashboard' && !selectedFolder && (
           <div className="max-w-5xl mx-auto px-6 py-8 md:py-12 animate-fade-in space-y-10">
             
             {/* Header: Greeting, Quote, and Streak */}
-            <div className="bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 items-center justify-between relative overflow-hidden">
+            <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
               
               <div className="flex-1 z-10">
@@ -414,23 +342,21 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Learning Progress Stats (Now Dynamic) */}
+            {/* Learning Progress Stats */}
             <div>
               <h2 className="text-lg md:text-xl font-extrabold text-[#0F172A] mb-5">Learning Progress</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-lg">📚</span> Cards Reviewed</h4>
-                  <p className="text-3xl font-black text-[#0F172A]">{cardsReviewed}</p>
+                  <p className="text-3xl font-black text-[#0F172A]">124</p>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-lg">🎯</span> Retention Accuracy</h4>
-                  <p className={`text-3xl font-black ${getRetentionAccuracy() > 70 ? 'text-green-600' : 'text-orange-500'}`}>
-                    {getRetentionAccuracy()}%
-                  </p>
+                  <p className="text-3xl font-black text-green-600">92%</p>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-lg">⏱️</span> Total Study Time</h4>
-                  <p className="text-3xl font-black text-blue-600">{getFormattedStudyTime()}</p>
+                  <p className="text-3xl font-black text-blue-600">4.5 hrs</p>
                 </div>
               </div>
             </div>
@@ -479,7 +405,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-6 py-8 md:py-12 animate-fade-in">
              <button onClick={() => setSelectedFolder(null)} className="text-sm font-bold text-slate-500 hover:text-[#0F172A] flex items-center gap-2 mb-6">← Back to My Decks</button>
              
-             <div className="bg-white p-8 rounded-4xl border border-slate-200 shadow-sm mb-8">
+             <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm mb-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6 mb-6">
                   <div>
                     <h2 className="text-3xl font-black text-[#0F172A]">{selectedFolder.name}</h2>
@@ -535,7 +461,7 @@ export default function Home() {
                 <button onClick={() => { setCurrentCardIndex(0); setupActiveRecallCard(0); }} className="bg-[#0F172A] text-white font-bold px-8 py-4 rounded-xl shadow-md hover:bg-slate-800">Restart Study</button>
               </div>
             ) : (
-              <div className="bg-white rounded-4xl p-8 md:p-12 shadow-sm border border-slate-200">
+              <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-slate-200">
                 <div className="mb-10 text-center">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-[#0F172A] leading-tight">
                     {flashcards[currentCardIndex].question}
@@ -580,7 +506,7 @@ export default function Home() {
 
                 <div className="border-t border-slate-100 pt-6 flex justify-center">
                   {!isAnswerChecked ? (
-                    <button onClick={handleCheckAnswer} disabled={!selectedAnswer} className="w-full md:w-auto bg-blue-600 text-white font-bold px-12 py-4 rounded-xl hover:bg-blue-700 disabled:opacity-50">
+                    <button onClick={() => setIsAnswerChecked(true)} disabled={!selectedAnswer} className="w-full md:w-auto bg-blue-600 text-white font-bold px-12 py-4 rounded-xl hover:bg-blue-700 disabled:opacity-50">
                       Check Answer
                     </button>
                   ) : (
@@ -589,45 +515,6 @@ export default function Home() {
                     </button>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* FEYNMAN TECHNIQUE UI */}
-        {selectedFolder && activeStudyMode === 'feynman' && (
-          <div className="max-w-4xl mx-auto px-6 py-12 animate-fade-in relative z-10">
-            <div className="flex justify-between items-center mb-8">
-              <button onClick={() => setActiveStudyMode('none')} className="text-sm font-bold text-slate-500 hover:text-red-500 bg-white border border-slate-200 px-5 py-2.5 rounded-full shadow-sm">Exit Session</button>
-              <span className="font-bold text-sm text-slate-400">{currentCardIndex + 1} / {flashcards.length}</span>
-            </div>
-            {currentCardIndex >= flashcards.length ? (
-              <div className="bg-white rounded-3xl p-16 text-center shadow-sm border border-slate-200">
-                <div className="text-6xl mb-6 drop-shadow-md">🎓</div>
-                <h3 className="text-3xl font-black text-[#0F172A] mb-8">Mastery Complete!</h3>
-                <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-8 py-4 rounded-xl shadow-md hover:bg-slate-800 text-lg">Teach Again</button>
-              </div>
-            ) : (
-              <div className="bg-white rounded-4xl p-8 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
-                <div className="mb-8 pb-8 border-b border-slate-100">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-2">Explain this concept</span>
-                  <h2 className="text-3xl md:text-4xl font-black text-[#0F172A]">{flashcards[currentCardIndex].question}</h2>
-                </div>
-                <textarea 
-                  value={feynmanInput} 
-                  onChange={(e) => setFeynmanInput(e.target.value)} 
-                  placeholder="Explain it simply, as if you are teaching a freshman..." 
-                  className="w-full h-56 bg-slate-50/80 border border-slate-200 rounded-3xl p-6 text-slate-700 text-lg font-medium focus:outline-none focus:border-indigo-400 focus:bg-white resize-none mb-8 transition-all"
-                />
-                {!isCardFlipped ? (
-                  <button onClick={handleFeynmanCheck} disabled={!feynmanInput.trim()} className="w-full bg-indigo-600 text-white font-bold text-lg px-8 py-5 rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all">Check Understanding 🔍</button>
-                ) : (
-                  <div className="animate-fade-in bg-indigo-50 p-8 rounded-3xl border border-indigo-100 mb-8">
-                    <span className="text-xs font-black uppercase tracking-widest text-indigo-400 block mb-3">Actual Answer</span>
-                    <p className="font-bold text-indigo-900 text-xl leading-relaxed">{flashcards[currentCardIndex].answer}</p>
-                  </div>
-                )}
-                {isCardFlipped && <button onClick={nextCard} className="w-full bg-[#0F172A] text-white font-bold text-lg px-8 py-5 rounded-2xl hover:bg-slate-800 transition-colors">Next Concept →</button>}
               </div>
             )}
           </div>
@@ -644,7 +531,7 @@ export default function Home() {
 
         {activeTab === 'community' && (
           <div className="max-w-4xl mx-auto px-6 py-8 md:py-12 animate-fade-in h-full flex flex-col pb-20">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-150">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[600px]">
               <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                 <h3 className="text-xl font-black text-[#0F172A]">Campus Lounge</h3>
                 <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live</span>
@@ -664,7 +551,7 @@ export default function Home() {
 
       {/* PROFILE SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden my-8">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="text-xl font-black text-[#0F172A]">Profile Settings</h3>
