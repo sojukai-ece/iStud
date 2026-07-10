@@ -377,7 +377,7 @@ export default function Home() {
       </div>
 
       {/* --- SIDEBAR (Desktop) --- */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
+      <aside className="hidden md:flex flex-col w-65 bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
         <div className="p-6 pb-2">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
             <div className="text-3xl font-black tracking-tighter text-[#0F172A]">
@@ -463,13 +463,13 @@ export default function Home() {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 md:ml-[260px] h-full overflow-y-auto pb-20 md:pb-8 relative">
+      <main className="flex-1 md:ml-65 h-full overflow-y-auto pb-20 md:pb-8 relative">
         
         {/* VIEW 1: HOME / DASHBOARD (Decks removed, purely analytics) */}
         {activeTab === 'dashboard' && (
           <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in space-y-8 md:space-y-10">
             
-            <div className="bg-white rounded-3xl md:rounded-[2rem] p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col xl:flex-row gap-6 md:gap-8 items-center justify-between relative overflow-hidden">
+            <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col xl:flex-row gap-6 md:gap-8 items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
               
               <div className="flex-1 z-10 w-full">
@@ -502,17 +502,17 @@ export default function Home() {
             <div>
               <h2 className="text-lg md:text-xl font-extrabold text-[#0F172A] mb-4 md:mb-5">Learning Progress</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
-                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">📚</span> Cards Reviewed</h4>
                   <p className="text-2xl md:text-3xl font-black text-[#0F172A]">{cardsReviewed}</p>
                 </div>
-                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">🎯</span> Retention Accuracy</h4>
                   <p className={`text-2xl md:text-3xl font-black ${getRetentionAccuracy() > 70 ? 'text-green-600' : 'text-orange-500'}`}>
                     {getRetentionAccuracy()}%
                   </p>
                 </div>
-                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
                   <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">⏱️</span> Total Study Time</h4>
                   <p className="text-2xl md:text-3xl font-black text-blue-600">{getFormattedStudyTime()}</p>
                 </div>
@@ -565,7 +565,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in">
              <button onClick={() => setSelectedFolder(null)} className="text-xs md:text-sm font-bold text-slate-500 hover:text-[#0F172A] flex items-center gap-2 mb-4 md:mb-6">← Back to Library</button>
              
-             <div className="bg-white p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-200 shadow-sm mb-6 md:mb-8 relative">
+             <div className="bg-white p-5 md:p-8 rounded-3xl md:rounded-4xl border border-slate-200 shadow-sm mb-6 md:mb-8 relative">
                 
                 {/* Deck Delete Button */}
                 <button onClick={() => handleDeleteFolder(selectedFolder.id)} className="absolute top-6 right-6 text-slate-300 hover:text-red-500 transition-colors text-lg" title="Delete Deck">🗑️</button>
@@ -617,7 +617,7 @@ export default function Home() {
         {activeTab === 'focus-hub' && (
           <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-10">
             
-            <div className="flex-1 bg-white rounded-[2rem] p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="flex-1 bg-white rounded-4xl p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
               <div className={`absolute inset-0 opacity-[0.03] transition-colors duration-1000 ${pomodoroMode === 'work' ? 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-blue-900 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-green-900 via-transparent to-transparent'}`}></div>
               
               <div className="relative z-10 w-full flex flex-col items-center">
@@ -661,7 +661,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="w-full lg:w-[400px] flex flex-col h-[500px] lg:h-auto bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="w-full lg:w-100 flex flex-col h-125 lg:h-auto bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h3 className="text-lg font-black text-[#0F172A]">Session Tasks</h3>
                 <span className="text-xs font-bold text-slate-400">{tasks.filter(t=>t.completed).length} / {tasks.length} Done</span>
@@ -707,7 +707,7 @@ export default function Home() {
                 <button onClick={() => { setCurrentCardIndex(0); setupActiveRecallCard(0); }} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 text-sm md:text-base w-full sm:w-auto">Restart Study</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-200">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-sm border border-slate-200">
                 <div className="mb-8 md:mb-10 text-center">
                   <h2 className="text-xl md:text-3xl font-extrabold text-[#0F172A] leading-tight">
                     {flashcards[currentCardIndex].question}
@@ -780,7 +780,7 @@ export default function Home() {
                 <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 text-sm md:text-lg w-full sm:w-auto">Teach Again</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
                 <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-slate-100">
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-1 md:mb-2">Explain this concept</span>
                   <h2 className="text-2xl md:text-4xl font-black text-[#0F172A]">{flashcards[currentCardIndex].question}</h2>
@@ -817,7 +817,7 @@ export default function Home() {
         {/* --- COMMUNITY CHAT --- */}
         {activeTab === 'community' && (
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in h-full flex flex-col">
-            <div className="bg-white rounded-[1.5rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[60vh] md:min-h-[600px]">
+            <div className="bg-white rounded-3xl md:rounded-3xl border border-slate-200 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[60vh] md:min-h-150">
               <div className="p-4 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Campus Lounge</h3>
                 <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-bold flex items-center gap-1.5 md:gap-2"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></span> Live</span>
@@ -837,7 +837,7 @@ export default function Home() {
 
       {/* PROFILE SETTINGS MODAL */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden my-8">
             <div className="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Profile Settings</h3>
