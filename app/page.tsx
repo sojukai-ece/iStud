@@ -542,8 +542,14 @@ export default function Home() {
       {introStage !== 'hidden' && (
         <div className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#0F172A] transition-opacity duration-500 ease-in-out ${introStage === 'fading' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center animate-float">
-            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-5 animate-pulse-glow drop-shadow-2xl">
-              iSt<span className="text-blue-500">u</span>d
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-5 animate-pulse-glow drop-shadow-2xl flex items-center justify-center">
+              iSt
+              <img 
+                src="logo.png" 
+                alt="u" 
+                className="w-12 h-12 md:w-20 md:h-20 object-contain mx-1 -mt-1 md:-mt-2"
+              />
+              d
             </h1>
             <div className="flex items-center gap-3 md:gap-4 text-slate-400 font-bold tracking-widest uppercase text-[10px] md:text-xs">
               <span>Built by sojukai.nvl</span>
@@ -566,20 +572,12 @@ export default function Home() {
         </div>
         
         {/* Mascot Body */}
-        <div onClick={pokeMascot} className="w-16 h-16 bg-[#0F172A] rounded-3xl rounded-tr-xl flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 transition-transform animate-float border-2 border-slate-700 relative overflow-hidden group">
-          {/* Inner screen */}
-          <div className="w-12 h-10 bg-blue-500 rounded-xl flex items-center justify-center gap-1.5 shadow-inner relative overflow-hidden">
-             {/* Scanline effect */}
-             <div className="absolute inset-0 bg-linear-to-b from-transparent via-white/10 to-transparent w-full h-full opacity-50 -translate-y-full group-hover:animate-[float_2s_linear_infinite]"></div>
-             
-             {/* Eyes */}
-             <div className={`w-2.5 h-3.5 bg-white rounded-full animate-blink ${isAxiTalking ? 'bg-yellow-300' : ''}`}></div>
-             <div className={`w-2.5 h-3.5 bg-white rounded-full animate-blink ${isAxiTalking ? 'bg-yellow-300' : ''}`}></div>
-          </div>
-          {/* Antenna */}
-          <div className="absolute -top-2 right-3 w-1.5 h-4 bg-slate-400 rounded-t-full">
-            <div className="w-2.5 h-2.5 bg-red-500 rounded-full absolute -top-1.5 -left-0.5 animate-pulse"></div>
-          </div>
+        <div onClick={pokeMascot} className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-float relative group">
+          <img 
+            src="logo.png" 
+            alt="iStud Mascot" 
+            className={`w-full h-full object-contain drop-shadow-xl transition-all duration-300 ${isAxiTalking ? 'scale-105 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]' : ''}`}
+          />
         </div>
       </div>
 
