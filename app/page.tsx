@@ -533,33 +533,41 @@ export default function Home() {
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         @keyframes blink { 0%, 96%, 98% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } 100% { transform: scaleY(1); } }
         @keyframes pulse-glow { 0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); transform: scale(1); } 50% { text-shadow: 0 0 50px rgba(59, 130, 246, 1); transform: scale(1.02); } }
+        
+        /* NEW: Image drop-shadow glow animation */
+        @keyframes img-glow { 
+          0%, 100% { filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.4)); transform: scale(1); } 
+          50% { filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.9)); transform: scale(1.05); } 
+        }
+        
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-blink { animation: blink 4s infinite; transform-origin: center; }
         .animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+        .animate-img-glow { animation: img-glow 2.5s ease-in-out infinite; } /* NEW CLASS */
       `}} />
 
       {/* --- STARTUP INTRO OVERLAY --- */}
       {introStage !== 'hidden' && (
-        <div className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#0F172A] transition-opacity duration-500 ease-in-out ${introStage === 'fading' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#ffffff] transition-opacity duration-500 ease-in-out ${introStage === 'fading' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center animate-float">
-            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-5 animate-pulse-glow drop-shadow-2xl flex items-center justify-center">
+            <h1 className="text-6xl md:text-8xl font-black text-blue-950 tracking-tighter mb-5 animate-pulse-glow drop-shadow-2xl flex items-center justify-center">
               iSt
               <img 
                 src="logo.png" 
                 alt="u" 
-                className="w-12 h-12 md:w-20 md:h-20 object-contain mx-1 -mt-1 md:-mt-2"
+                className="w-12 h-12 md:w-20 md:h-20 object-contain mx-1 -mt-1 md:-mt-2 animate-img-glow"
               />
               d
             </h1>
-            <div className="flex items-center gap-3 md:gap-4 text-slate-400 font-bold tracking-widest uppercase text-[10px] md:text-xs">
+            <div className="flex items-center gap-3 md:gap-4 text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
               <span>Built by sojukai.nvl</span>
               <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
-              <span className="text-blue-400 font-black">Auxilink Philippines</span>
+              <span className="text-slate-950 font-black">Auxilink Philippines</span>
             </div>
           </div>
           <div className="absolute bottom-16 flex flex-col items-center opacity-60">
             <div className="w-6 h-6 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin"></div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-4">Initializing Workspace</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-900 mt-4">Initializing Workspace</span>
           </div>
         </div>
       )}
@@ -576,7 +584,7 @@ export default function Home() {
           <img 
             src="logo.png" 
             alt="iStud Mascot" 
-            className={`w-full h-full object-contain drop-shadow-xl transition-all duration-300 ${isAxiTalking ? 'scale-105 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]' : ''}`}
+            className={`w-full h-full object-contain transition-all duration-300 animate-img-glow ${isAxiTalking ? 'scale-110 drop-shadow-[0_0_25px_rgba(250,204,21,0.8)]!' : ''}`}
           />
         </div>
       </div>
