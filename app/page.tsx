@@ -529,7 +529,7 @@ export default function Home() {
       {/* --- AXI MASCOT --- */}
       <div className="fixed bottom-20 md:bottom-8 right-6 z-50 flex flex-col items-end">
         {/* Chat Bubble */}
-        <div className={`mb-3 bg-white border border-slate-200 shadow-xl p-4 rounded-2xl rounded-br-none max-w-[200px] transition-all duration-300 origin-bottom-right ${isAxiTalking ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
+        <div className={`mb-3 bg-white border border-slate-200 shadow-xl p-4 rounded-2xl rounded-br-none max-w-50 transition-all duration-300 origin-bottom-right ${isAxiTalking ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
           <p className="text-xs font-bold text-slate-700 leading-relaxed">{axiMessage}</p>
         </div>
         
@@ -538,7 +538,7 @@ export default function Home() {
           {/* Inner screen */}
           <div className="w-12 h-10 bg-blue-500 rounded-xl flex items-center justify-center gap-1.5 shadow-inner relative overflow-hidden">
              {/* Scanline effect */}
-             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent w-full h-full opacity-50 translate-y-[-100%] group-hover:animate-[float_2s_linear_infinite]"></div>
+             <div className="absolute inset-0 bg-linear-to-b from-transparent via-white/10 to-transparent w-full h-full opacity-50 -translate-y-full group-hover:animate-[float_2s_linear_infinite]"></div>
              
              {/* Eyes */}
              <div className={`w-2.5 h-3.5 bg-white rounded-full animate-blink ${isAxiTalking ? 'bg-yellow-300' : ''}`}></div>
@@ -572,7 +572,7 @@ export default function Home() {
       </div>
 
       {/* --- SIDEBAR (Desktop) --- */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
+      <aside className="hidden md:flex flex-col w-65 bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
             <div className="text-3xl font-black tracking-tighter text-[#0F172A] group-hover:scale-105 transition-transform origin-left">
@@ -641,13 +641,13 @@ export default function Home() {
       </div>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 md:ml-[260px] h-full overflow-y-auto pb-28 md:pb-8 relative scroll-smooth">
+      <main className="flex-1 md:ml-65 h-full overflow-y-auto pb-28 md:pb-8 relative scroll-smooth">
         
         {/* VIEW 1: HOME / DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in space-y-6 md:space-y-8">
             
-            <div className="bg-white rounded-3xl md:rounded-[2rem] p-6 md:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col xl:flex-row gap-6 md:gap-8 items-center justify-between relative overflow-hidden group">
+            <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col xl:flex-row gap-6 md:gap-8 items-center justify-between relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3 group-hover:bg-blue-100 transition-colors duration-700"></div>
               
               <div className="flex-1 z-10 w-full">
@@ -685,17 +685,17 @@ export default function Home() {
                 <div>
                   <h2 className="text-lg md:text-xl font-extrabold text-[#0F172A] mb-4 md:mb-5">Learning Progress</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
-                    <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-lg hover:-translate-y-1 transition-all">
+                    <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-lg hover:-translate-y-1 transition-all">
                       <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">📚</span> Cards Reviewed</h4>
                       <p className="text-2xl md:text-3xl font-black text-[#0F172A]">{cardsReviewed}</p>
                     </div>
-                    <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-lg hover:-translate-y-1 transition-all">
+                    <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-lg hover:-translate-y-1 transition-all">
                       <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">🎯</span> Retention Accuracy</h4>
                       <p className={`text-2xl md:text-3xl font-black ${getRetentionAccuracy() > 70 ? 'text-green-600' : 'text-orange-500'}`}>
                         {getRetentionAccuracy()}%
                       </p>
                     </div>
-                    <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-lg hover:-translate-y-1 transition-all">
+                    <div className="bg-white p-5 md:p-6 rounded-[1.25rem] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center hover:shadow-lg hover:-translate-y-1 transition-all">
                       <h4 className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><span className="text-base md:text-lg">⏱️</span> Total Study Time</h4>
                       <p className="text-2xl md:text-3xl font-black text-blue-600">{getFormattedStudyTime()}</p>
                     </div>
@@ -749,7 +749,7 @@ export default function Home() {
               <div className="space-y-6 md:space-y-8">
                 
                 {/* DYNAMIC Upcoming Milestones */}
-                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col max-h-[400px]">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col max-h-100">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-base font-black text-[#0F172A]">Upcoming Milestones</h3>
                     <button onClick={() => setIsAddingMilestone(!isAddingMilestone)} className={`text-blue-600 bg-blue-50 hover:bg-blue-100 w-7 h-7 rounded-full flex items-center justify-center transition-all font-bold text-lg ${isAddingMilestone ? 'rotate-45' : ''}`}>+</button>
@@ -802,8 +802,8 @@ export default function Home() {
                 </div>
 
                 {/* CREATOR STATUS WIDGET (SOLO DEV) */}
-                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-500 to-indigo-500"></div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-base font-black text-[#0F172A]">Creator Status</h3>
                     <div className="bg-slate-100 px-2 py-1 rounded flex items-center gap-1 opacity-60">
@@ -811,22 +811,22 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="flex items-center gap-3">
-                       <div className="relative">
+                  <div className="flex flex-col xl:flex-row xl:items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100 gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                       <div className="relative shrink-0">
                          <img src="https://github.com/sojukai-ece.png" alt="sojukai-ece" className="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover" />
                          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white transition-colors duration-300 ${devStatus === 'Online' ? 'bg-green-500' : devStatus === 'Updating' ? 'bg-blue-500' : 'bg-slate-400'}`}></div>
                        </div>
-                       <div>
-                         <span className="block font-bold text-sm text-[#0F172A] leading-tight">sojukai.nvl</span>
-                         <a href="https://github.com/sojukai-ece" target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline font-bold transition-all">@sojukai-ece</a>
+                       <div className="min-w-0">
+                         <span className="block font-bold text-sm text-[#0F172A] leading-tight truncate">sojukai.nvl</span>
+                         <a href="https://github.com/sojukai-ece" target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline font-bold transition-all truncate block">@sojukai-ece</a>
                        </div>
                     </div>
                     
                     <select 
                       value={devStatus} 
                       onChange={(e) => setDevStatus(e.target.value as any)}
-                      className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 rounded-lg px-2.5 py-2 outline-none cursor-pointer hover:border-blue-400 focus:border-blue-500 transition-colors shadow-sm text-slate-700"
+                      className="w-full xl:w-auto text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 rounded-lg px-2.5 py-2 outline-none cursor-pointer hover:border-blue-400 focus:border-blue-500 transition-colors shadow-sm text-slate-700 shrink-0"
                     >
                       <option value="Online">🟢 Online</option>
                       <option value="Updating">🔵 Updating</option>
@@ -845,12 +845,12 @@ export default function Home() {
           <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-10">
             {/* Left Column: ID Card & Stats */}
             <div className="w-full lg:w-1/3 flex flex-col gap-6">
-              <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden relative hover:shadow-lg transition-shadow">
-                <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-700 relative">
+              <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden relative hover:shadow-lg transition-shadow">
+                <div className="h-32 bg-linear-to-r from-blue-600 to-indigo-700 relative">
                   <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 </div>
                 <div className="px-6 pb-8 pt-0 flex flex-col items-center relative">
-                  <div className="w-28 h-28 rounded-full border-4 border-white shadow-md bg-white -mt-14 mb-4 relative group cursor-pointer overflow-hidden z-10 flex items-center justify-center bg-slate-100 hover:scale-105 transition-transform">
+                  <div className="w-28 h-28 rounded-full border-4 border-white shadow-md bg-white -mt-14 mb-4 relative group cursor-pointer overflow-hidden z-10 flex items-center justify-center hover:scale-105 transition-transform">
                     {isUploadingAvatar ? (
                        <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     ) : avatarUrl ? (
@@ -885,7 +885,7 @@ export default function Home() {
 
             {/* Right Column: Settings & Full Stats */}
             <div className="flex-1 flex flex-col gap-6">
-              <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm">
                 <h3 className="text-xl font-black text-[#0F172A] mb-6">Profile Settings</h3>
                 <form onSubmit={handleUpdateProfile} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -914,12 +914,12 @@ export default function Home() {
                 </form>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-orange-50 border border-orange-100 p-5 rounded-[1.5rem] hover:shadow-md transition-shadow">
+                <div className="bg-orange-50 border border-orange-100 p-5 rounded-3xl hover:shadow-md transition-shadow">
                   <div className="text-2xl mb-2">🔥</div>
                   <p className="text-[10px] font-extrabold text-orange-800 uppercase tracking-widest mb-1">Active Streak</p>
                   <p className="text-2xl font-black text-orange-600">{activeStreak} Days</p>
                 </div>
-                <div className="bg-blue-50 border border-blue-100 p-5 rounded-[1.5rem] hover:shadow-md transition-shadow">
+                <div className="bg-blue-50 border border-blue-100 p-5 rounded-3xl hover:shadow-md transition-shadow">
                   <div className="text-2xl mb-2">⏱️</div>
                   <p className="text-[10px] font-extrabold text-blue-800 uppercase tracking-widest mb-1">Focus Time</p>
                   <p className="text-2xl font-black text-blue-600">{getFormattedStudyTime()}</p>
@@ -951,7 +951,7 @@ export default function Home() {
                   </div>
               ) : (
                 folders.map((folder, idx) => (
-                  <div key={folder.id} onClick={() => openFolder(folder)} className="bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden p-5 md:p-6 pl-7 md:pl-8 cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-blue-200 transition-all duration-300 group flex flex-col justify-between min-h-[120px]">
+                  <div key={folder.id} onClick={() => openFolder(folder)} className="bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden p-5 md:p-6 pl-7 md:pl-8 cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-blue-200 transition-all duration-300 group flex flex-col justify-between min-h-30">
                     <div className={`absolute left-0 top-0 bottom-0 w-2.5 md:w-3 ${getDeckColor(idx)} group-hover:w-4 transition-all duration-300`}></div>
                     <div className="mb-4 pr-2">
                       <h3 className="font-black text-[#0F172A] text-base md:text-lg group-hover:text-blue-600 transition-colors line-clamp-2">{folder.name}</h3>
@@ -973,7 +973,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in">
              <button onClick={() => setSelectedFolder(null)} className="text-xs md:text-sm font-bold text-slate-500 hover:text-[#0F172A] flex items-center gap-2 mb-4 md:mb-6 transition-colors">← Back to Library</button>
              
-             <div className="bg-white p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-200 shadow-sm mb-6 md:mb-8 relative">
+             <div className="bg-white p-5 md:p-8 rounded-3xl md:rounded-4xl border border-slate-200 shadow-sm mb-6 md:mb-8 relative">
                 <button onClick={() => handleDeleteFolder(selectedFolder.id)} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete Deck">
                   <Icons.Trash />
                 </button>
@@ -1045,7 +1045,7 @@ export default function Home() {
         {/* --- FOCUS HUB --- */}
         {activeTab === 'focus-hub' && (
           <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-10">
-            <div className="flex-1 bg-white rounded-[2rem] p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="flex-1 bg-white rounded-4xl p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
               <div className={`absolute inset-0 opacity-[0.03] transition-colors duration-1000 ${pomodoroMode === 'work' ? 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-blue-900 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-green-900 via-transparent to-transparent'}`}></div>
               <div className="relative z-10 w-full flex flex-col items-center">
                 <div className="flex gap-4 mb-6">
@@ -1086,7 +1086,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="w-full lg:w-[400px] flex flex-col h-[400px] md:h-[500px] lg:h-auto bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <div className="w-full lg:w-100 flex flex-col h-100 md:h-125 lg:h-auto bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
               <div className="p-5 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h3 className="text-base md:text-lg font-black text-[#0F172A]">Session Tasks</h3>
                 <span className="text-[10px] md:text-xs font-bold text-slate-400">{tasks.filter(t=>t.completed).length} / {tasks.length} Done</span>
@@ -1131,7 +1131,7 @@ export default function Home() {
                 <button onClick={() => { setCurrentCardIndex(0); setupActiveRecallCard(0); }} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-0.5 transition-all text-sm md:text-base w-full sm:w-auto">Restart Study</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-md border border-slate-200">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-md border border-slate-200">
                 <div className="mb-8 md:mb-10 text-center animate-fade-in">
                   <h2 className="text-xl md:text-3xl font-extrabold text-[#0F172A] leading-tight">
                     {flashcards[currentCardIndex].question}
@@ -1202,7 +1202,7 @@ export default function Home() {
                 <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-0.5 transition-all text-sm md:text-lg w-full sm:w-auto">Teach Again</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-lg border border-slate-200 relative overflow-hidden transition-all duration-500">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-lg border border-slate-200 relative overflow-hidden transition-all duration-500">
                 <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-slate-100">
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-1 md:mb-2">Explain this concept</span>
                   <h2 className="text-2xl md:text-4xl font-black text-[#0F172A]">{flashcards[currentCardIndex].question}</h2>
@@ -1242,7 +1242,7 @@ export default function Home() {
                 <button onClick={() => setCurrentCardIndex(0)} className="bg-[#0F172A] text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-0.5 transition-all text-sm md:text-lg w-full sm:w-auto">Study Again</button>
               </div>
             ) : (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-lg border border-slate-200 relative overflow-hidden flex flex-col transition-all duration-500">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-lg border border-slate-200 relative overflow-hidden flex flex-col transition-all duration-500">
                 <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-teal-500 block mb-1 md:mb-2">Blurt everything you know</span>
@@ -1306,7 +1306,7 @@ export default function Home() {
         {/* --- COMMUNITY CHAT --- */}
         {activeTab === 'community' && (
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in h-full flex flex-col">
-            <div className="bg-white rounded-[1.5rem] md:rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col flex-1 overflow-hidden min-h-[60vh] md:min-h-[600px]">
+            <div className="bg-white rounded-3xl md:rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col flex-1 overflow-hidden min-h-[60vh] md:min-h-150">
               <div className="p-4 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h3 className="text-lg md:text-xl font-black text-[#0F172A]">Campus Lounge</h3>
                 <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-bold flex items-center gap-1.5 md:gap-2 shadow-sm"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></span> Live</span>
@@ -1322,9 +1322,9 @@ export default function Home() {
                     return ( 
                       <div key={msg.id} className={`flex items-end gap-2 md:gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'} animate-fade-in`}>
                         {displayAvatar ? (
-                          <img src={displayAvatar} alt="Avatar" className="w-8 h-8 min-w-[2rem] min-h-[2rem] aspect-square rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
+                          <img src={displayAvatar} alt="Avatar" className="w-8 h-8 min-w-8 min-h-8 aspect-square rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
                         ) : (
-                          <div className="w-8 h-8 min-w-[2rem] min-h-[2rem] aspect-square rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">{msg.user_name.charAt(0).toUpperCase()}</div>
+                          <div className="w-8 h-8 min-w-8 min-h-8 aspect-square rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">{msg.user_name.charAt(0).toUpperCase()}</div>
                         )}
                         <div className={`max-w-[85%] md:max-w-md p-3 md:p-4 rounded-2xl shadow-sm flex flex-col ${isMe ? 'bg-[#0F172A] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm'}`}> 
                           <span className={`font-bold text-[9px] md:text-[10px] uppercase tracking-wider mb-1 ${isMe ? 'text-slate-400 text-right' : 'text-slate-400'}`}>
