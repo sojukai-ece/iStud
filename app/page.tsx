@@ -53,6 +53,9 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [dailyQuote, setDailyQuote] = useState('');
   
+  // --- INTRO ANIMATION STATE ---
+  const [introStage, setIntroStage] = useState<'active' | 'fading' | 'hidden'>('active');
+
   // --- MASCOT STATE ---
   const [axiMessage, setAxiMessage] = useState(AXI_QUOTES[0]);
   const [isAxiTalking, setIsAxiTalking] = useState(false);
@@ -127,6 +130,13 @@ export default function Home() {
 
   const deckColors = ['bg-red-600', 'bg-green-500', 'bg-blue-600', 'bg-yellow-400', 'bg-purple-500', 'bg-teal-400'];
   const getDeckColor = (idx: number) => deckColors[idx % deckColors.length];
+
+  // --- INTRO EFFECT ---
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setIntroStage('fading'), 2000);
+    const hideTimer = setTimeout(() => setIntroStage('hidden'), 2500);
+    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+  }, []);
 
   // --- INITIALIZE & REALTIME ---
   useEffect(() => {
@@ -518,13 +528,35 @@ export default function Home() {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden">
       
-      {/* CSS For Mascot Animation */}
+      {/* CSS For Animations */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         @keyframes blink { 0%, 96%, 98% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } 100% { transform: scaleY(1); } }
+        @keyframes pulse-glow { 0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); transform: scale(1); } 50% { text-shadow: 0 0 50px rgba(59, 130, 246, 1); transform: scale(1.02); } }
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-blink { animation: blink 4s infinite; transform-origin: center; }
+        .animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
       `}} />
+
+      {/* --- STARTUP INTRO OVERLAY --- */}
+      {introStage !== 'hidden' && (
+        <div className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#0F172A] transition-opacity duration-500 ease-in-out ${introStage === 'fading' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="flex flex-col items-center animate-float">
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-5 animate-pulse-glow drop-shadow-2xl">
+              iSt<span className="text-blue-500">u</span>d
+            </h1>
+            <div className="flex items-center gap-3 md:gap-4 text-slate-400 font-bold tracking-widest uppercase text-[10px] md:text-xs">
+              <span>Built by sojukai.nvl</span>
+              <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
+              <span className="text-blue-400 font-black">Auxilink Philippines</span>
+            </div>
+          </div>
+          <div className="absolute bottom-16 flex flex-col items-center opacity-60">
+            <div className="w-6 h-6 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin"></div>
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-4">Initializing Workspace</span>
+          </div>
+        </div>
+      )}
 
       {/* --- AXI MASCOT --- */}
       <div className="fixed bottom-20 md:bottom-8 right-6 z-50 flex flex-col items-end">
