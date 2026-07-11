@@ -1317,12 +1317,14 @@ export default function Home() {
                 ) : (
                   chatMessages.map((msg) => { 
                     const isMe = user?.id === msg.user_id; 
+                    const displayAvatar = (isMe && avatarUrl) ? avatarUrl : msg.avatar_url;
+                    
                     return ( 
                       <div key={msg.id} className={`flex items-end gap-2 md:gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'} animate-fade-in`}>
-                        {msg.avatar_url ? (
-                          <img src={msg.avatar_url} alt="Avatar" className="w-8 h-8 min-w-[2rem] min-h-[2rem] aspect-square rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
+                        {displayAvatar ? (
+                          <img src={displayAvatar} alt="Avatar" className="w-8 h-8 min-w-[2rem] min-h-[2rem] aspect-square rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
                         ) : (
-                          <div className="w-8 h-8 min-w-[2rem] min-h-[2rem] aspect-square rounded-full bg-slate-300 text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">{msg.user_name.charAt(0).toUpperCase()}</div>
+                          <div className="w-8 h-8 min-w-[2rem] min-h-[2rem] aspect-square rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">{msg.user_name.charAt(0).toUpperCase()}</div>
                         )}
                         <div className={`max-w-[85%] md:max-w-md p-3 md:p-4 rounded-2xl shadow-sm flex flex-col ${isMe ? 'bg-[#0F172A] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm'}`}> 
                           <span className={`font-bold text-[9px] md:text-[10px] uppercase tracking-wider mb-1 ${isMe ? 'text-slate-400 text-right' : 'text-slate-400'}`}>
