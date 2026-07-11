@@ -555,7 +555,7 @@ export default function Home() {
               <img 
                 src="logo.png" 
                 alt="u" 
-                className="w-12 h-12 md:w-20 md:h-20 object-contain -ml-1 -mr-3 -mt-1 md:-mt-1 animate-img-glow"
+                className="w-12 h-12 md:w-20 md:h-20 object-contain -ml-1 -mr-1 -mt-1 md:-mt-1 animate-img-glow"
               />
               d
             </h1>
