@@ -593,7 +593,7 @@ export default function Home() {
               <img 
                 src="logo.png" 
                 alt="u" 
-                className="w-12 h-12 md:w-20 md:h-20 object-contain mx-0 mt-0 md:-mt-2 animate-img-glow"
+                className="w-12 h-12 md:w-20 md:h-20 object-contain mx-0 -mt-1 md:-mt-2 animate-img-glow"
               />
               d
             </h1>
