@@ -11,13 +11,38 @@ interface Flashcard { id: string; question: string; answer: string; }
 interface ChatMessage { id: string; user_id: string; user_name: string; avatar_url?: string; text: string; created_at: string; }
 interface Task { id: string; text: string; completed: boolean; }
 interface Milestone { id: string; title: string; date: string; location: string; color: string; }
+interface Profile { id: string; display_name: string; avatar_url: string; course: string; university: string; }
+
+// --- 20-LEVEL PROGRESSION RANKS ---
+const RANKS = [
+  { level: 1, title: 'Novice Scholar', minExp: 0, icon: '🌱', color: 'text-green-600', bg: 'bg-green-50', fill: 'bg-green-500' },
+  { level: 2, title: 'Iron Apprentice', minExp: 50, icon: '💡', color: 'text-emerald-600', bg: 'bg-emerald-50', fill: 'bg-emerald-500' },
+  { level: 3, title: 'Bronze Student', minExp: 150, icon: '🔌', color: 'text-teal-600', bg: 'bg-teal-50', fill: 'bg-teal-500' },
+  { level: 4, title: 'Silver Thinker', minExp: 300, icon: '🧰', color: 'text-cyan-600', bg: 'bg-cyan-50', fill: 'bg-cyan-500' },
+  { level: 5, title: 'Boolean Brawler', minExp: 500, icon: '⚔️', color: 'text-blue-600', bg: 'bg-blue-50', fill: 'bg-blue-500' },
+  { level: 6, title: 'Gold Analyst', minExp: 750, icon: '⌨️', color: 'text-indigo-600', bg: 'bg-indigo-50', fill: 'bg-indigo-500' },
+  { level: 7, title: 'Platinum Mind', minExp: 1050, icon: '📟', color: 'text-violet-600', bg: 'bg-violet-50', fill: 'bg-violet-500' },
+  { level: 8, title: 'Diamond Intellect', minExp: 1400, icon: '🗺️', color: 'text-purple-600', bg: 'bg-purple-50', fill: 'bg-purple-500' },
+  { level: 9, title: 'Algorithm Architect', minExp: 1800, icon: '📐', color: 'text-fuchsia-600', bg: 'bg-fuchsia-50', fill: 'bg-fuchsia-500' },
+  { level: 10, title: 'Master Observer', minExp: 2250, icon: '🧙', color: 'text-pink-600', bg: 'bg-pink-50', fill: 'bg-pink-500' },
+  { level: 11, title: 'Signal Processor', minExp: 2750, icon: '📡', color: 'text-rose-600', bg: 'bg-rose-50', fill: 'bg-rose-500' },
+  { level: 12, title: 'Awakened Learner', minExp: 3300, icon: '📻', color: 'text-red-600', bg: 'bg-red-50', fill: 'bg-red-500' },
+  { level: 13, title: 'Quantum Scribe', minExp: 3900, icon: '🌐', color: 'text-orange-600', bg: 'bg-orange-50', fill: 'bg-orange-500' },
+  { level: 14, title: 'IoT Pioneer', minExp: 4550, icon: '☁️', color: 'text-amber-600', bg: 'bg-amber-50', fill: 'bg-amber-500' },
+  { level: 15, title: 'Neural Navigator', minExp: 5250, icon: '🪄', color: 'text-yellow-600', bg: 'bg-yellow-50', fill: 'bg-yellow-500' },
+  { level: 16, title: 'System Simulator', minExp: 6000, icon: '🖥️', color: 'text-lime-600', bg: 'bg-lime-50', fill: 'bg-lime-500' },
+  { level: 17, title: 'Silicon Sage', minExp: 6800, icon: '⚙️', color: 'text-green-600', bg: 'bg-green-50', fill: 'bg-green-500' },
+  { level: 18, title: 'Master Polymath', minExp: 7650, icon: '🖲️', color: 'text-emerald-600', bg: 'bg-emerald-50', fill: 'bg-emerald-500' },
+  { level: 19, title: 'Omni-Polymath', minExp: 8550, icon: '👑', color: 'text-indigo-600', bg: 'bg-indigo-50', fill: 'bg-indigo-500' },
+  { level: 20, title: 'Iskolar ng Husay', minExp: 10000, icon: '🌟', color: 'text-amber-500', bg: 'bg-slate-900', fill: 'bg-amber-500' }
+];
 
 // --- MASCOT QUOTES & EASTER EGGS ---
 const AXI_QUOTES = [
   "Ready to conquer some subjects? Let's go!",
   "Remember to hydrate! A well-oiled machine runs best.",
   "Logic gates are cool, but have you tried getting 8 hours of sleep?",
-  "Built by a solo dev... pretty impressive, right?",
+  "Built by 4 Developers... pretty impressive, right?",
   "Simplifying Boolean algebra... just kidding, I'm just a mascot.",
   "Focus mode: engaged. Distractions: eliminated.",
   "Don't forget to review those truth tables today!",
@@ -45,11 +70,15 @@ const Icons = {
   Camera: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>,
   LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
   Brain: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
-  Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  Users: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+  UserPlus: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
+  UserCheck: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
 };
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'decks' | 'focus-hub' | 'auxilink-ai' | 'community' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'decks' | 'focus-hub' | 'auxilink-ai' | 'community' | 'socials' | 'profile'>('dashboard');
   const [user, setUser] = useState<any>(null);
   const [dailyQuote, setDailyQuote] = useState('');
   
@@ -69,7 +98,13 @@ export default function Home() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // --- CREATOR STATUS STATE (SOLO DEV) ---
+  // --- SOCIALS STATE ---
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [friendsList, setFriendsList] = useState<Profile[]>([]);
+  const [isSearchingNetwork, setIsSearchingNetwork] = useState(false);
+
+  // --- CREATOR STATUS STATE (TEAM) ---
   const [devStatus, setDevStatus] = useState<'Online' | 'Offline' | 'Updating'>('Offline');
 
   // --- STUDY HUB CORE STATE ---
@@ -103,6 +138,28 @@ export default function Home() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [studyTimeSeconds, setStudyTimeSeconds] = useState(0);
   const [activeStreak, setActiveStreak] = useState(1);
+
+  // --- NEW: EXP & RANK CALCULATION ---
+  const calculateExp = () => {
+    return (cardsReviewed * 5) + (correctAnswers * 10) + Math.floor(studyTimeSeconds / 60) * 2;
+  };
+  const currentExp = calculateExp();
+
+  const rankDetails = (() => {
+    let current = RANKS[0];
+    let next = RANKS[1];
+    for (let i = 0; i < RANKS.length; i++) {
+      if (currentExp >= RANKS[i].minExp) {
+        current = RANKS[i];
+        next = RANKS[i + 1] || RANKS[i];
+      } else {
+        break;
+      }
+    }
+    const isMax = current.level === 20;
+    const progressPct = isMax ? 100 : Math.min(100, Math.max(0, ((currentExp - current.minExp) / (next.minExp - current.minExp)) * 100));
+    return { ...current, nextMinExp: next.minExp, progressPct, isMax };
+  })();
 
   // --- ACTIVE STUDY MODES STATE ---
   const [activeStudyMode, setActiveStudyMode] = useState<'none' | 'active-recall' | 'feynman' | 'blurting'>('none');
@@ -201,7 +258,7 @@ export default function Home() {
         const savedMilestones = localStorage.getItem(`istud_milestones_${user.id}`);
         if (savedMilestones) setMilestones(JSON.parse(savedMilestones));
 
-        // ACTUAL CALENDAR STREAK CHECK (V2 - Reset for all users to factual logic)
+        // ACTUAL CALENDAR STREAK CHECK
         const todayStr = new Date().toDateString(); 
         const lastLoginKey = `istud_lastlogin_v2_${user.id}`;
         const streakKey = `istud_streak_v2_${user.id}`;
@@ -249,6 +306,8 @@ export default function Home() {
           }
           setDailyOptions([randomCard.answer, ...wrongOptions].sort(() => Math.random() - 0.5));
         }
+
+        fetchFriendsList(user.id);
       }
       
       const { data: chatData } = await supabase.from('community_messages').select('*').order('created_at', { ascending: true });
@@ -279,6 +338,63 @@ export default function Home() {
       localStorage.setItem(`istud_milestones_${user.id}`, JSON.stringify(milestones));
     }
   }, [cardsReviewed, correctAnswers, studyTimeSeconds, tasks, milestones, user]);
+
+  // --- SOCIALS LOGIC ---
+  const fetchFriendsList = async (userId: string) => {
+    // Note: Requires backend 'friends' table mapped to 'profiles' view
+    try {
+      const { data, error } = await supabase
+        .from('friends')
+        .select(`friend_id, profiles!friends_friend_id_fkey(id, display_name, avatar_url, course, university)`)
+        .eq('user_id', userId);
+        
+      if (!error && data) {
+        const parsedFriends = data.map((f: any) => f.profiles).filter(Boolean);
+        setFriendsList(parsedFriends);
+      }
+    } catch (err) {
+      console.log("Database relationships not set up yet.");
+    }
+  };
+
+  const handleSearchNetwork = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim() || !user) return;
+    setIsSearchingNetwork(true);
+    
+    // Search the public profiles table for matches (excluding yourself)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('display_name', `%${searchQuery}%`)
+      .neq('id', user.id)
+      .limit(10);
+      
+    setIsSearchingNetwork(false);
+    if (!error && data) {
+      setSearchResults(data);
+    }
+  };
+
+  const handleAddFriend = async (friendProfile: Profile) => {
+    if (!user) return;
+    // Optimistic UI Update
+    setFriendsList((prev) => [...prev, friendProfile]);
+    
+    const { error } = await supabase.from('friends').insert([
+      { user_id: user.id, friend_id: friendProfile.id }
+    ]);
+    if (error) {
+       alert("Error adding friend. Ensure tables are created.");
+       setFriendsList((prev) => prev.filter(f => f.id !== friendProfile.id));
+    }
+  };
+
+  const handleRemoveFriend = async (friendId: string) => {
+    if (!user) return;
+    setFriendsList((prev) => prev.filter(f => f.id !== friendId));
+    await supabase.from('friends').delete().match({ user_id: user.id, friend_id: friendId });
+  };
 
 
   // --- MASCOT INTERACTION ---
@@ -326,14 +442,23 @@ export default function Home() {
     await supabase.auth.signOut();
     setUser(null); setFolders([]); setActiveTab('dashboard');
     setCardsReviewed(0); setCorrectAnswers(0); setStudyTimeSeconds(0); setTasks([]);
+    setFriendsList([]);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    
+    // Update local auth metadata
     const { data, error } = await supabase.auth.updateUser({ 
       data: { display_name: displayName, avatar_url: avatarUrl, university: university, course: course, bio: bio } 
     });
+    
+    // Sync with public profiles table explicitly just in case trigger fails
+    await supabase.from('profiles').upsert({
+      id: user.id, display_name: displayName, avatar_url: avatarUrl, course: course, university: university
+    });
+
     if (error) alert("Error updating profile: " + error.message);
     else { setUser(data.user); alert("Profile updated successfully!"); }
   };
@@ -545,14 +670,6 @@ export default function Home() {
     return `${hrs} hrs`;
   };
 
-  const getAcademicRank = () => {
-    const hrs = studyTimeSeconds / 3600;
-    if (hrs < 1) return { title: 'Novice Scholar', icon: '🌱', color: 'text-green-600', bg: 'bg-green-50' };
-    if (hrs < 5) return { title: 'Adept Student', icon: '📘', color: 'text-blue-600', bg: 'bg-blue-50' };
-    if (hrs < 20) return { title: 'Dedicated Engineer', icon: '⚙️', color: 'text-indigo-600', bg: 'bg-indigo-50' };
-    return { title: 'Master Polymath', icon: '👑', color: 'text-purple-600', bg: 'bg-purple-50' };
-  };
-
   const formatClock = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -598,7 +715,7 @@ export default function Home() {
               d
             </h1>
             <div className="flex items-center gap-3 md:gap-4 text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
-              <span>Built by sojukai.nvl</span>
+              <span>Built by 4 Developers</span>
               <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
               <span className="text-slate-950 font-black">Auxilink Philippines</span>
             </div>
@@ -633,17 +750,24 @@ export default function Home() {
             iSt<span className="text-blue-600">u</span>d
           </div>
         </div>
-        {user ? (
-          <button onClick={() => setActiveTab('profile')} className={`flex items-center active:scale-95 transition-transform rounded-full border-2 ${activeTab === 'profile' ? 'border-blue-600 p-0.5' : 'border-transparent'}`}>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold border border-slate-200 shadow-sm">{user.email?.charAt(0).toUpperCase()}</div>
-            )}
-          </button>
-        ) : (
-           <Link href="/login" className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">Sign In</Link>
-        )}
+        <div className="flex items-center gap-4">
+           {user && (
+             <button onClick={() => setActiveTab('socials')} className={`transition-transform hover:scale-110 ${activeTab === 'socials' ? 'text-blue-600' : 'text-slate-400'}`}>
+               <Icons.Users />
+             </button>
+           )}
+          {user ? (
+            <button onClick={() => setActiveTab('profile')} className={`flex items-center active:scale-95 transition-transform rounded-full border-2 ${activeTab === 'profile' ? 'border-blue-600 p-0.5' : 'border-transparent'}`}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold border border-slate-200 shadow-sm">{user.email?.charAt(0).toUpperCase()}</div>
+              )}
+            </button>
+          ) : (
+              <Link href="/login" className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">Sign In</Link>
+          )}
+        </div>
       </div>
 
       {/* --- SIDEBAR (Desktop) --- */}
@@ -674,15 +798,22 @@ export default function Home() {
           </button>
           
           {user ? (
-            <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 relative mt-2 border ${activeTab === 'profile' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold">{user.email?.charAt(0).toUpperCase()}</div>
-              )}
-              My Profile
-              <span className="absolute right-4 top-3.5 bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{activeStreak}🔥</span>
-            </button>
+            <>
+              <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 relative mt-2 border ${activeTab === 'profile' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold">{user.email?.charAt(0).toUpperCase()}</div>
+                )}
+                My Profile
+                <span className="absolute right-4 top-3.5 bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{activeStreak}🔥</span>
+              </button>
+              
+              {/* SOCIALS DESKTOP BUTTON */}
+              <button onClick={() => setActiveTab('socials')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 mt-1 border ${activeTab === 'socials' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
+                <span className={activeTab === 'socials' ? 'text-blue-600' : ''}><Icons.Users /></span> Network
+              </button>
+            </>
           ) : (
             <Link href="/login" className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-blue-600 hover:bg-blue-50 mt-2 transition-colors">
               Sign In
@@ -735,18 +866,31 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row w-full xl:w-auto gap-3 md:gap-4 z-10">
-                <div className="flex flex-1 items-center gap-4 bg-orange-50 border border-orange-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-inner justify-center sm:justify-start hover:scale-105 transition-transform">
-                  <div className="text-3xl md:text-4xl drop-shadow-sm">🔥</div>
-                  <div>
-                    <p className="text-[9px] md:text-[10px] font-extrabold text-orange-800 uppercase tracking-widest mb-0.5 md:mb-1">Active Streak</p>
-                    <p className="text-lg md:text-xl font-black text-orange-600">{activeStreak} {activeStreak === 1 ? 'Day' : 'Days'}</p>
+                <div className="flex flex-col flex-1 items-start gap-2 bg-orange-50 border border-orange-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-inner justify-center hover:scale-105 transition-transform w-full relative overflow-hidden">
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl md:text-4xl drop-shadow-sm z-10">🔥</div>
+                    <div className="flex-1 z-10">
+                      <p className="text-[9px] md:text-[10px] font-extrabold text-orange-800 uppercase tracking-widest mb-0.5 md:mb-1">Active Streak</p>
+                      <p className="text-lg md:text-xl font-black text-orange-600">{activeStreak} {activeStreak === 1 ? 'Day' : 'Days'}</p>
+                    </div>
                   </div>
                 </div>
-                <div className={`flex flex-1 items-center gap-4 ${getAcademicRank().bg} border border-slate-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-inner justify-center sm:justify-start hover:scale-105 transition-transform`}>
-                  <div className="text-3xl md:text-4xl drop-shadow-sm">{getAcademicRank().icon}</div>
-                  <div>
-                    <p className={`text-[9px] md:text-[10px] font-extrabold ${getAcademicRank().color} opacity-80 uppercase tracking-widest mb-0.5 md:mb-1`}>Current Rank</p>
-                    <p className={`text-lg md:text-xl font-black ${getAcademicRank().color} leading-tight`}>{getAcademicRank().title}</p>
+
+                {/* --- GAMIFIED EXP WIDGET --- */}
+                <div className={`flex flex-col flex-1 gap-2 ${rankDetails.bg} border border-slate-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-inner justify-center hover:scale-105 transition-transform w-full sm:w-64 relative overflow-hidden`}>
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl md:text-4xl drop-shadow-sm z-10">{rankDetails.icon}</div>
+                    <div className="flex-1 min-w-0 z-10">
+                      <div className="flex justify-between items-center w-full">
+                        <p className={`text-[9px] md:text-[10px] font-extrabold ${rankDetails.color} opacity-80 uppercase tracking-widest mb-0.5 md:mb-1`}>Level {rankDetails.level}</p>
+                        <p className={`text-[9px] md:text-[10px] font-extrabold ${rankDetails.color} opacity-80 uppercase tracking-widest`}>{currentExp} / {rankDetails.isMax ? 'MAX' : rankDetails.nextMinExp} XP</p>
+                      </div>
+                      <p className={`text-lg md:text-xl font-black ${rankDetails.color} leading-tight truncate`}>{rankDetails.title}</p>
+                    </div>
+                  </div>
+                  {/* EXP Bar Progress */}
+                  <div className="w-full h-1.5 md:h-2 bg-black/5 rounded-full overflow-hidden mt-1 relative z-10">
+                    <div className={`absolute top-0 left-0 h-full ${rankDetails.fill} transition-all duration-1000 ease-out`} style={{ width: `${rankDetails.progressPct}%` }}></div>
                   </div>
                 </div>
               </div>
@@ -900,7 +1044,7 @@ export default function Home() {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-base font-black text-[#0F172A]">Creator Status</h3>
                     <div className="bg-slate-100 px-2 py-1 rounded flex items-center gap-1 opacity-60">
-                      <Icons.Settings /> <span className="text-[9px] font-bold uppercase">Solo</span>
+                      <Icons.Settings /> <span className="text-[9px] font-bold uppercase">Team</span>
                     </div>
                   </div>
                   
@@ -932,6 +1076,107 @@ export default function Home() {
                 </div>
 
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* SOCIALS / NETWORK HUB */}
+        {activeTab === 'socials' && user && (
+          <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col gap-6 md:gap-10">
+            <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-100 pb-5 md:pb-6 mb-5 md:mb-6">
+                <div>
+                  <h2 className="text-xl md:text-3xl font-black text-[#0F172A] flex items-center gap-3">
+                    <Icons.Users /> My Network
+                  </h2>
+                  <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Connect, collaborate, and compete with other students.</p>
+                </div>
+                
+                {/* Search Bar */}
+                <form onSubmit={handleSearchNetwork} className="w-full md:w-auto relative flex">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                     <Icons.Search />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Find friends by name..."
+                    className="w-full md:w-72 bg-slate-50 border border-slate-200 pl-11 pr-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                  />
+                  <button type="submit" className="hidden">Search</button>
+                </form>
+              </div>
+
+              {/* SEARCH RESULTS VIEW */}
+              {searchQuery && searchResults.length > 0 && (
+                <div className="mb-10">
+                  <h3 className="font-extrabold text-[#0F172A] mb-4 flex items-center gap-2">Search Results</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {searchResults.map((p) => {
+                      const isFriend = friendsList.some(f => f.id === p.id);
+                      return (
+                        <div key={p.id} className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100">
+                          {p.avatar_url ? (
+                             <img src={p.avatar_url} alt="Profile" className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                          ) : (
+                             <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-lg font-bold shrink-0">{p.display_name?.charAt(0).toUpperCase() || '?'}</div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm text-[#0F172A] truncate">{p.display_name}</p>
+                            <p className="text-[10px] md:text-xs text-slate-500 truncate">{p.course || 'Scholar'}</p>
+                          </div>
+                          {!isFriend ? (
+                            <button onClick={() => handleAddFriend(p)} className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer shrink-0">
+                              <Icons.UserPlus />
+                            </button>
+                          ) : (
+                            <button className="bg-green-100 text-green-600 p-2 rounded-lg cursor-default shrink-0">
+                              <Icons.UserCheck />
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {isSearchingNetwork && searchQuery && <p className="text-center text-sm font-bold text-blue-500 animate-pulse my-6">Searching servers...</p>}
+              {searchQuery && searchResults.length === 0 && !isSearchingNetwork && <p className="text-center text-sm font-bold text-slate-400 my-6">No scholars found matching "{searchQuery}".</p>}
+
+              {/* FRIENDS LIST */}
+              <div>
+                <h3 className="font-extrabold text-[#0F172A] mb-4">Connections</h3>
+                {friendsList.length === 0 ? (
+                  <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center flex flex-col items-center">
+                     <div className="text-4xl mb-4 opacity-50">🔌</div>
+                     <p className="font-bold text-slate-600 text-sm mb-1">Your network circuit is currently open.</p>
+                     <p className="font-medium text-slate-400 text-xs">Search for classmates and friends above to close the loop!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     {friendsList.map(friend => (
+                        <div key={friend.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+                           {friend.avatar_url ? (
+                              <img src={friend.avatar_url} alt="Profile" className="w-14 h-14 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                           ) : (
+                              <div className="w-14 h-14 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xl font-bold shrink-0">{friend.display_name?.charAt(0).toUpperCase() || '?'}</div>
+                           )}
+                           <div className="flex-1 min-w-0">
+                              <p className="font-black text-sm text-[#0F172A] truncate">{friend.display_name}</p>
+                              <p className="text-[10px] md:text-xs text-blue-600 font-bold truncate mt-0.5">{friend.course || 'Engineering Student'}</p>
+                              <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.university}</p>
+                           </div>
+                           <button onClick={() => handleRemoveFriend(friend.id)} className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer md:opacity-0 group-hover:opacity-100">
+                             <Icons.Trash />
+                           </button>
+                        </div>
+                     ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         )}
@@ -968,13 +1213,21 @@ export default function Home() {
                   <h2 className="text-2xl font-black text-[#0F172A] text-center leading-tight">{displayName || user.email?.split('@')[0]}</h2>
                   <p className="text-sm font-bold text-blue-600 mt-1">{course || 'Electronics Engineering'}</p>
                   <p className="text-xs font-medium text-slate-500 mt-0.5 text-center px-4">{university || 'Polytechnic University of the Philippines'}</p>
-                  <div className={`mt-6 w-full rounded-2xl p-4 flex items-center justify-between border ${getAcademicRank().bg} border-transparent`}>
+                  
+                  {/* GAMIFIED EXP PROFILE BANNER */}
+                  <div className={`mt-6 w-full rounded-2xl p-4 flex flex-col gap-3 border ${rankDetails.bg} border-transparent`}>
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{getAcademicRank().icon}</div>
-                      <div>
-                        <p className={`text-[9px] font-black uppercase tracking-widest ${getAcademicRank().color} opacity-70`}>Rank</p>
-                        <p className={`text-sm font-bold ${getAcademicRank().color}`}>{getAcademicRank().title}</p>
+                      <div className="text-2xl">{rankDetails.icon}</div>
+                      <div className="flex-1">
+                        <p className={`text-[9px] font-black uppercase tracking-widest ${rankDetails.color} opacity-70`}>Level {rankDetails.level}</p>
+                        <p className={`text-sm font-bold ${rankDetails.color}`}>{rankDetails.title}</p>
                       </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-black ${rankDetails.color}`}>{currentExp} XP</p>
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden relative">
+                      <div className={`absolute top-0 left-0 h-full ${rankDetails.fill} transition-all duration-1000 ease-out`} style={{ width: `${rankDetails.progressPct}%` }}></div>
                     </div>
                   </div>
                 </div>
