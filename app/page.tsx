@@ -76,7 +76,14 @@ const Icons = {
   Users: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
   Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
   UserPlus: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
-  UserCheck: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+  UserCheck: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
+  Send: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+  Paperclip: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
+  Mic: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>,
+  Lightbulb: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
+  Question: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>,
+  Tool: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
+  Target: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
 };
 
 export default function Home() {
@@ -117,6 +124,12 @@ export default function Home() {
   const [activeGroup, setActiveGroup] = useState<StudyGroup | null>(null);
   const [groupMessages, setGroupMessages] = useState<ChatMessage[]>([]);
   const [newGroupChatInput, setNewGroupChatInput] = useState('');
+
+  // --- SPARK-1 AI STATE ---
+  const [sparkMessages, setSparkMessages] = useState<{id: string, role: 'user' | 'ai', text: string}[]>([]); // Initialized empty for new UI
+  const [sparkInput, setSparkInput] = useState('');
+  const [isSparkTyping, setIsSparkTyping] = useState(false);
+  const sparkChatEndRef = useRef<HTMLDivElement>(null);
 
   // --- CREATOR STATUS STATE (TEAM) ---
   const [devStatus, setDevStatus] = useState<'Online' | 'Offline' | 'Updating'>('Offline');
@@ -201,6 +214,17 @@ export default function Home() {
 
   const deckColors = ['bg-red-600', 'bg-green-500', 'bg-blue-600', 'bg-yellow-400', 'bg-purple-500', 'bg-teal-400'];
   const getDeckColor = (idx: number) => deckColors[idx % deckColors.length];
+
+  // --- GET TIME GREETING ---
+  const hour = new Date().getHours();
+  const greetingTime = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+
+  // --- SPARK AI CHAT AUTO-SCROLL ---
+  useEffect(() => {
+    if (activeTab === 'auxilink-ai' && sparkMessages.length > 0) {
+      sparkChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [sparkMessages, isSparkTyping, activeTab]);
 
   // --- INTRO EFFECT ---
   useEffect(() => {
@@ -712,6 +736,29 @@ export default function Home() {
     }]);
   };
 
+  // --- SPARK-1 ACTION HANDLER ---
+  const sendSparkMessage = (text: string) => {
+    if (!text.trim()) return;
+    const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
+    setSparkMessages(prev => [...prev, newMsg]);
+    setSparkInput('');
+    setIsSparkTyping(true);
+
+    setTimeout(() => {
+      setSparkMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        text: "I'm currently running in offline simulation mode, but I've processed your query! Integrate my endpoints with a production LLM API to bring my full capabilities online."
+      }]);
+      setIsSparkTyping(false);
+    }, 1800);
+  };
+
+  const handleSparkSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendSparkMessage(sparkInput);
+  };
+
   // --- MILESTONES HANDLERS ---
   const handleAddMilestone = (e: React.FormEvent) => {
     e.preventDefault();
@@ -833,10 +880,26 @@ export default function Home() {
           50% { filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.9)); transform: scale(1.05); } 
         }
         
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(15px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-blink { animation: blink 4s infinite; transform-origin: center; }
         .animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
         .animate-img-glow { animation: img-glow 2.5s ease-in-out infinite; } 
+        .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+
+        .spark-typing-dot {
+          animation: sparkTyping 1.4s infinite ease-in-out both;
+        }
+        .spark-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .spark-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes sparkTyping {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1); }
+        }
       `}} />
 
       {/* --- STARTUP INTRO OVERLAY --- */}
@@ -866,7 +929,7 @@ export default function Home() {
       )}
 
       {/* --- AXI MASCOT --- */}
-      {activeTab !== 'community' && !activeGroup && (
+      {activeTab !== 'community' && activeTab !== 'auxilink-ai' && !activeGroup && (
         <div className="fixed bottom-20 md:bottom-8 right-6 z-50 flex flex-col items-end">
           <div className={`mb-3 bg-white border border-slate-200 shadow-xl p-4 rounded-2xl rounded-br-none max-w-50 transition-all duration-300 origin-bottom-right ${isAxiTalking ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
             <p className="text-xs font-bold text-slate-700 leading-relaxed">{axiMessage}</p>
@@ -2011,12 +2074,171 @@ export default function Home() {
           </div>
         )}
 
-        {/* --- AUXILINK AI --- */}
+        {/* --- AUXILINK AI: SPARK-1 MODULE --- */}
         {activeTab === 'auxilink-ai' && (
-          <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 md:py-24 text-center animate-fade-in">
-            <div className="text-5xl md:text-6xl mb-4 md:mb-6 drop-shadow-md animate-float inline-block">🤖</div>
-            <h2 className="text-3xl md:text-4xl font-black text-[#0F172A] mb-3 md:mb-4">Auxilink AI Module</h2>
-            <p className="text-base md:text-lg text-slate-500 font-medium max-w-xl mx-auto">This intelligent engineering assistant is currently under development for iStud.</p>
+          <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-8 animate-fade-in h-full flex flex-col relative">
+            
+            {sparkMessages.length === 0 ? (
+              // --- NEW INITIAL HERO UI ---
+              <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto animate-fade-in-up">
+                
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#0F172A] mb-3 tracking-tight">
+                        Good {greetingTime}, {displayName || user?.email?.split('@')[0] || 'Scholar'}
+                    </h1>
+                    <p className="text-lg md:text-xl text-slate-500 font-medium">
+                        What can I help you with?
+                    </p>
+                </div>
+
+                <form 
+                  onSubmit={handleSparkSubmit}
+                  className="w-full bg-white border border-slate-200 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 transition-all p-2 flex items-center mb-8 relative z-20"
+                >
+                  <button type="button" className="p-3 text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
+                      <Icons.Paperclip />
+                  </button>
+                  <input
+                      type="text"
+                      value={sparkInput}
+                      onChange={(e) => setSparkInput(e.target.value)}
+                      placeholder="Ask Spark-1..."
+                      className="flex-1 bg-transparent px-2 py-3 text-base md:text-lg outline-none font-medium text-[#0F172A]"
+                  />
+                  <button type="button" className="p-3 text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
+                      <Icons.Mic />
+                  </button>
+                  <button
+                      type="submit"
+                      disabled={!sparkInput.trim() || isSparkTyping}
+                      className="bg-[#0F172A] text-white w-12 h-12 rounded-full hover:bg-slate-800 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center shadow-md ml-1"
+                  >
+                      <Icons.Send />
+                  </button>
+                </form>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+                  {[
+                      { text: "Help me understand a topic", icon: <Icons.Lightbulb /> },
+                      { text: "I need help setting up my account.", icon: <Icons.Question /> },
+                      { text: "What do you do as Spark-1?", icon: <Icons.Tool /> },
+                      { text: "Create a study guide for [topic]", icon: <Icons.Target /> }
+                  ].map((suggestion, i) => (
+                      <button
+                          key={i}
+                          onClick={() => sendSparkMessage(suggestion.text.replace(' [topic]', ''))}
+                          className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-indigo-200 hover:shadow-sm transition-all text-left group"
+                      >
+                          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                              {suggestion.icon}
+                          </div>
+                          <span className="text-sm font-bold text-slate-700 group-hover:text-[#0F172A] transition-colors">{suggestion.text}</span>
+                      </button>
+                  ))}
+                </div>
+
+              </div>
+            ) : (
+              // --- EXISTING CHAT UI ---
+              <>
+                {/* Header / Module Identity */}
+                <div className="bg-white rounded-t-3xl border border-slate-200 border-b-0 shadow-sm p-5 md:p-6 flex items-center justify-between shrink-0 z-10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md animate-pulse-glow">
+                      <span className="text-xl">✨</span>
+                    </div>
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-black text-[#0F172A]">Spark-1</h2>
+                      <p className="text-[10px] md:text-xs font-bold text-indigo-500 uppercase tracking-wider">Auxilink Engineering Intelligence</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-3 py-1 rounded-full font-bold flex items-center gap-2 shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online
+                    </span>
+                  </div>
+                </div>
+
+                {/* AI Chat History */}
+                <div className="flex-1 bg-[#F8FAFC] border-x border-slate-200 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar flex flex-col">
+                  {sparkMessages.map((msg) => {
+                    const isAI = msg.role === 'ai';
+                    return (
+                      <div key={msg.id} className={`flex items-end gap-3 ${isAI ? 'flex-row' : 'flex-row-reverse'} animate-fade-in`}>
+                        {isAI ? (
+                          <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shrink-0">
+                            <span className="text-[10px]">✨</span>
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">
+                            {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                        )}
+                        
+                        <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-2xl shadow-sm flex flex-col ${
+                          isAI 
+                            ? 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm' 
+                            : 'bg-blue-600 text-white rounded-br-sm'
+                        }`}>
+                          <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Typing Indicator */}
+                  {isSparkTyping && (
+                    <div className="flex items-end gap-3 flex-row animate-fade-in">
+                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shrink-0">
+                        <span className="text-[10px]">✨</span>
+                      </div>
+                      <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-bl-sm shadow-sm flex gap-1 items-center h-13">
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={sparkChatEndRef} />
+                </div>
+
+                {/* AI Chat Input Dock */}
+                <div className="bg-white rounded-b-3xl border border-slate-200 shadow-sm p-3 md:p-4 shrink-0 z-10">
+                  <form 
+                    onSubmit={handleSparkSubmit} 
+                    onClick={() => document.getElementById('sparkInputBox')?.focus()} 
+                    className="flex gap-2 relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all p-1"
+                  >
+                    <textarea 
+                      id="sparkInputBox"
+                      value={sparkInput}
+                      onChange={(e) => setSparkInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSparkSubmit(e as any);
+                        }
+                      }}
+                      disabled={isSparkTyping}
+                      placeholder="Ask Spark-1 about your coursework, request study plans, or debug code..."
+                      className="flex-1 bg-transparent px-4 py-3 text-sm md:text-base font-medium outline-none resize-none disabled:opacity-50 h-14 custom-scrollbar"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={!sparkInput.trim() || isSparkTyping} 
+                      className="bg-[#0F172A] text-white p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-[#0F172A] transition-colors self-end mb-1 mr-1 flex items-center justify-center cursor-pointer shadow-sm hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                      <Icons.Send />
+                    </button>
+                  </form>
+                  <div className="text-center mt-2">
+                    <span className="text-[10px] text-slate-400 font-bold tracking-wide">Spark-1 can make mistakes. Verify critical engineering formulas.</span>
+                  </div>
+                </div>
+              </>
+            )}
+
           </div>
         )}
 
