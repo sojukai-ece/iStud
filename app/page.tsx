@@ -83,7 +83,12 @@ const Icons = {
   Lightbulb: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
   Question: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>,
   Tool: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
-  Target: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+  Target: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
+  ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>,
+  Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
+  Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>,
+  Menu: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
 };
 
 export default function Home() {
@@ -125,11 +130,17 @@ export default function Home() {
   const [groupMessages, setGroupMessages] = useState<ChatMessage[]>([]);
   const [newGroupChatInput, setNewGroupChatInput] = useState('');
 
-  // --- SPARK-1 AI STATE ---
-  const [sparkMessages, setSparkMessages] = useState<{id: string, role: 'user' | 'ai', text: string}[]>([]); // Initialized empty for new UI
+  // --- NEW: AI ENHANCEMENTS STATE ---
+  const [sparkMessages, setSparkMessages] = useState<{id: string, role: 'user' | 'ai', text: string}[]>([]);
   const [sparkInput, setSparkInput] = useState('');
   const [isSparkTyping, setIsSparkTyping] = useState(false);
   const sparkChatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Model Selection & History State
+  const [selectedAIModel, setSelectedAIModel] = useState<'Spark-1' | 'Helios 3'>('Spark-1');
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
+  const [isAIHistoryOpen, setIsAIHistoryOpen] = useState(true);
 
   // --- CREATOR STATUS STATE (TEAM) ---
   const [devStatus, setDevStatus] = useState<'Online' | 'Offline' | 'Updating'>('Offline');
@@ -364,7 +375,6 @@ export default function Home() {
   useEffect(() => {
     if (!activeGroup) return;
 
-    // Fetch existing messages for this group
     const fetchGroupMessages = async () => {
       const { data } = await supabase
         .from('study_group_messages')
@@ -375,7 +385,6 @@ export default function Home() {
     };
     fetchGroupMessages();
 
-    // Subscribe to new messages specifically for this group
     const groupChannel = supabase
       .channel(`group-${activeGroup.id}`)
       .on('postgres_changes', { 
@@ -405,7 +414,7 @@ export default function Home() {
     }
   }, [cardsReviewed, correctAnswers, studyTimeSeconds, tasks, milestones, user]);
 
-  // --- COMPLETELY REWRITTEN SOCIALS / NETWORK LOGIC ---
+  // --- SOCIALS / NETWORK LOGIC ---
   const fetchNetworkData = async (userId: string) => {
     try {
       const { data: incomingRequests } = await supabase
@@ -736,11 +745,18 @@ export default function Home() {
     }]);
   };
 
-  // --- SPARK-1 ACTION HANDLER ---
+  // --- SPARK-1 / HELIOS ACTION HANDLER ---
   const sendSparkMessage = (text: string) => {
     if (!text.trim()) return;
     const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
+    
     setSparkMessages(prev => [...prev, newMsg]);
+    
+    // Add to history if unique
+    if (!aiPromptHistory.includes(text)) {
+      setAiPromptHistory(prev => [text, ...prev]);
+    }
+    
     setSparkInput('');
     setIsSparkTyping(true);
 
@@ -757,6 +773,19 @@ export default function Home() {
   const handleSparkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendSparkMessage(sparkInput);
+  };
+
+  const handleNewAIChat = () => {
+    setSparkMessages([]);
+    setSparkInput('');
+  };
+
+  const handleSelectHistoryPrompt = (prompt: string) => {
+    setSparkInput(prompt);
+  };
+
+  const handleDeleteHistoryItem = (indexToDelete: number) => {
+    setAiPromptHistory(prev => prev.filter((_, idx) => idx !== indexToDelete));
   };
 
   // --- MILESTONES HANDLERS ---
@@ -873,7 +902,7 @@ export default function Home() {
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         @keyframes blink { 0%, 96%, 98% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } 100% { transform: scaleY(1); } }
-        @keyframes pulse-glow { 0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); transform: scale(1); } 50% { text-shadow: 0 0 50px rgba(59, 130, 246, 1); transform: scale(1.02); } }
+        @keyframes pulse-glow { 0%, 100% { text-shadow: 0 0 20px rgba(79, 70, 229, 0.4); transform: scale(1); } 50% { text-shadow: 0 0 50px rgba(79, 70, 229, 1); transform: scale(1.02); } }
         
         @keyframes img-glow { 
           0%, 100% { filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.4)); transform: scale(1); } 
@@ -1283,11 +1312,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* SOCIALS / NETWORK HUB (WITH SPECIFIC GROUP CHAT) */}
+        {/* SOCIALS / NETWORK HUB */}
         {activeTab === 'socials' && user && (
           <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col gap-6 md:gap-10 h-full">
             
-            {/* If a group is active, show the Group Hub Chatroom instead of the main network view */}
             {activeGroup ? (
               <div className="bg-white rounded-3xl md:rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full min-h-[70vh] md:min-h-150 overflow-hidden">
                 <div className="p-4 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
@@ -2074,171 +2102,291 @@ export default function Home() {
           </div>
         )}
 
-        {/* --- AUXILINK AI: SPARK-1 MODULE --- */}
+        {/* --- AUXILINK AI: SPARK-1 / HELIOS 3 MODULE --- */}
         {activeTab === 'auxilink-ai' && (
-          <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-8 animate-fade-in h-full flex flex-col relative">
-            
-            {sparkMessages.length === 0 ? (
-              // --- NEW INITIAL HERO UI ---
-              <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto animate-fade-in-up">
+          <div className="flex w-full h-full md:p-6 p-0 md:pb-6 pb-20 animate-fade-in">
+            <div className="flex-1 bg-white md:rounded-3xl border-y md:border border-slate-200 shadow-sm flex overflow-hidden relative max-w-7xl mx-auto w-full">
+              
+              {/* AI Sidebar (History) */}
+              <div className={`${isAIHistoryOpen ? 'w-full md:w-80 border-r border-slate-200' : 'w-0 border-r-0'} transition-all duration-500 ease-in-out bg-[#F8FAFC] flex flex-col absolute md:relative z-30 h-full overflow-hidden shrink-0`}>
+                <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Icons.Clock />
+                    <span className="font-black text-sm text-[#0F172A]">Prompt History</span>
+                  </div>
+                  <button onClick={() => setIsAIHistoryOpen(false)} className="md:hidden text-slate-400 hover:text-slate-700">
+                    ✕
+                  </button>
+                </div>
                 
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#0F172A] mb-3 tracking-tight">
-                        Good {greetingTime}, {displayName || user?.email?.split('@')[0] || 'Scholar'}
-                    </h1>
-                    <p className="text-lg md:text-xl text-slate-500 font-medium">
-                        What can I help you with?
-                    </p>
-                </div>
-
-                <form 
-                  onSubmit={handleSparkSubmit}
-                  className="w-full bg-white border border-slate-200 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 transition-all p-2 flex items-center mb-8 relative z-20"
-                >
-                  <button type="button" className="p-3 text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
-                      <Icons.Paperclip />
-                  </button>
-                  <input
-                      type="text"
-                      value={sparkInput}
-                      onChange={(e) => setSparkInput(e.target.value)}
-                      placeholder="Ask Spark-1..."
-                      className="flex-1 bg-transparent px-2 py-3 text-base md:text-lg outline-none font-medium text-[#0F172A]"
-                  />
-                  <button type="button" className="p-3 text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
-                      <Icons.Mic />
-                  </button>
-                  <button
-                      type="submit"
-                      disabled={!sparkInput.trim() || isSparkTyping}
-                      className="bg-[#0F172A] text-white w-12 h-12 rounded-full hover:bg-slate-800 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center shadow-md ml-1"
-                  >
-                      <Icons.Send />
-                  </button>
-                </form>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full animate-fade-in-up" style={{animationDelay: '0.1s'}}>
-                  {[
-                      { text: "Help me understand a topic", icon: <Icons.Lightbulb /> },
-                      { text: "I need help setting up my account.", icon: <Icons.Question /> },
-                      { text: "What do you do as Spark-1?", icon: <Icons.Tool /> },
-                      { text: "Create a study guide for [topic]", icon: <Icons.Target /> }
-                  ].map((suggestion, i) => (
-                      <button
-                          key={i}
-                          onClick={() => sendSparkMessage(suggestion.text.replace(' [topic]', ''))}
-                          className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-indigo-200 hover:shadow-sm transition-all text-left group"
-                      >
-                          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                              {suggestion.icon}
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                  {aiPromptHistory.length === 0 ? (
+                    <div className="text-center py-10 text-slate-400">
+                      <p className="text-xs font-bold">No history yet.</p>
+                      <p className="text-[10px] mt-1">Start a conversation!</p>
+                    </div>
+                  ) : (
+                    aiPromptHistory.map((prompt, idx) => (
+                      <div key={idx} className="group relative w-full text-left p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all flex items-start gap-3">
+                        <button 
+                          onClick={() => {
+                            handleSelectHistoryPrompt(prompt);
+                            if(window.innerWidth < 768) setIsAIHistoryOpen(false); // Close on mobile
+                          }}
+                          className="flex-1 flex items-start gap-3 cursor-pointer"
+                        >
+                          <div className="mt-0.5 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0">
+                            <Icons.Chat />
                           </div>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-[#0F172A] transition-colors">{suggestion.text}</span>
-                      </button>
-                  ))}
+                          <span className="text-xs font-bold text-slate-600 group-hover:text-slate-900 line-clamp-2 leading-relaxed text-left">
+                            {prompt}
+                          </span>
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteHistoryItem(idx); }} 
+                          className="text-slate-300 hover:text-red-500 md:opacity-0 group-hover:opacity-100 transition-opacity p-1 cursor-pointer"
+                          title="Delete prompt"
+                        >
+                          <Icons.Trash />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
+              </div>
+
+              {/* Main AI Chat Area */}
+              <div className="flex-1 flex flex-col relative min-w-0 bg-white">
+                
+                {/* Header / Model Identity */}
+                <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 flex items-center justify-between shrink-0 z-20">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setIsAIHistoryOpen(!isAIHistoryOpen)}
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${isAIHistoryOpen ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                      title={isAIHistoryOpen ? "Close History" : "Open History"}
+                    >
+                      <Icons.Menu />
+                    </button>
+                    
+                    {/* Custom Model Dropdown */}
+                    <div className="relative">
+                      <button 
+                        onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                        className="flex items-center gap-2 md:gap-3 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer"
+                      >
+                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center shadow-sm shrink-0 overflow-hidden bg-white`}>
+                          <img src="auxi.png" alt="AI" className="w-full h-full object-contain p-1" />
+                        </div>
+                        <span className="font-black text-xs md:text-sm text-[#0F172A]">{selectedAIModel}</span>
+                        <span className={`hidden md:inline-flex text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${selectedAIModel === 'Spark-1' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {selectedAIModel === 'Spark-1' ? 'Stable' : 'Dev'}
+                        </span>
+                        <Icons.ChevronDown />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {isModelDropdownOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-56 md:w-64 bg-white border border-slate-200 rounded-2xl p-2 shadow-xl z-50 animate-fade-in-up">
+                          <button
+                            onClick={() => { setSelectedAIModel('Spark-1'); setIsModelDropdownOpen(false); }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all cursor-pointer text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 overflow-hidden border border-slate-100">
+                               <img src="logo.png" alt="AI" className="w-full h-full object-contain p-1.5" />
+                            </div>
+                            <div>
+                              <span className="block text-sm font-black text-[#0F172A]">Spark-1</span>
+                              <span className="block text-[10px] font-bold text-green-600">Stable Release</span>
+                            </div>
+                          </button>
+                          
+                          <button
+                            disabled
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 opacity-60 cursor-not-allowed mt-1 text-left group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center shadow-sm shrink-0 grayscale overflow-hidden border border-slate-200">
+                                <img src="logo.png" alt="AI" className="w-full h-full object-contain p-1.5 opacity-50" />
+                              </div>
+                              <div>
+                                <span className="block text-sm font-black text-slate-500">Helios 3</span>
+                                <span className="block text-[10px] font-bold text-amber-500">Deep Development</span>
+                              </div>
+                            </div>
+                            <div className="text-slate-400">
+                              <Icons.Lock />
+                            </div>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* New Chat Button */}
+                  <button 
+                    onClick={handleNewAIChat}
+                    className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 md:px-4 md:py-2 rounded-xl transition-colors font-bold text-xs md:text-sm shadow-sm cursor-pointer"
+                  >
+                    <Icons.Plus />
+                    <span className="hidden md:inline">New Chat</span>
+                  </button>
+                </div>
+
+                {sparkMessages.length === 0 ? (
+                  // --- NEW INITIAL HERO UI ---
+                  <div className="flex-1 flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4 animate-fade-in-up relative">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-50 rounded-full blur-[100px] -z-10"></div>
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-[0_0_40px_rgba(99,102,241,0.2)] mb-6 animate-float overflow-hidden">
+                      <img src="auxi.png" alt="AI" className="w-full h-full object-contain p-3" />
+                    </div>
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#0F172A] mb-3 tracking-tight">
+                            Good {greetingTime}, {displayName || user?.email?.split('@')[0] || 'Scholar'}
+                        </h1>
+                        <p className="text-lg md:text-xl text-slate-500 font-medium">
+                            I am {selectedAIModel}. How can I assist you today?
+                        </p>
+                    </div>
+
+                    {/* DYNAMIC CENTERED INPUT */}
+                    <form 
+                      onSubmit={handleSparkSubmit} 
+                      onClick={() => document.getElementById('sparkInputCenter')?.focus()} 
+                      className="w-full max-w-2xl bg-white border-2 border-indigo-100 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 rounded-2xl overflow-hidden transition-all p-2 shadow-xl mb-8 flex items-end cursor-text"
+                    >
+                      <textarea 
+                        id="sparkInputCenter"
+                        value={sparkInput}
+                        onChange={(e) => setSparkInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSparkSubmit(e as any);
+                          }
+                        }}
+                        disabled={isSparkTyping}
+                        placeholder={`Ask ${selectedAIModel} to synthesize a concept or solve a problem...`}
+                        className="flex-1 bg-transparent px-4 py-3 text-base md:text-lg font-medium outline-none resize-none disabled:opacity-50 h-16 custom-scrollbar"
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={!sparkInput.trim() || isSparkTyping} 
+                        className="bg-indigo-600 text-white w-12 h-12 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors shrink-0 flex items-center justify-center cursor-pointer shadow-sm hover:-translate-y-0.5 active:translate-y-0 mb-1 mr-1"
+                      >
+                        <Icons.Send />
+                      </button>
+                    </form>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                      {[
+                          { text: "Help me understand a topic", icon: <Icons.Lightbulb /> },
+                          { text: "Create a study guide for [topic]", icon: <Icons.Target /> },
+                          { text: "Debug my code snippet", icon: <Icons.Tool /> },
+                          { text: "Explain active recall benefits", icon: <Icons.Question /> }
+                      ].map((suggestion, i) => (
+                          <button
+                              key={i}
+                              onClick={() => sendSparkMessage(suggestion.text.replace(' [topic]', ''))}
+                              className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-white/60 hover:bg-white hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all text-left group cursor-pointer backdrop-blur-sm"
+                          >
+                              <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                  {suggestion.icon}
+                              </div>
+                              <span className="text-xs md:text-sm font-bold text-slate-700 group-hover:text-[#0F172A] transition-colors">{suggestion.text}</span>
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  // --- EXISTING CHAT UI (WITH BOTTOM INPUT DOCK) ---
+                  <>
+                    <div className="flex-1 bg-[#F8FAFC] overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar flex flex-col relative z-0">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
+                      
+                      {sparkMessages.map((msg) => {
+                        const isAI = msg.role === 'ai';
+                        return (
+                          <div key={msg.id} className={`flex items-end gap-3 ${isAI ? 'flex-row' : 'flex-row-reverse'} animate-fade-in`}>
+                            {isAI ? (
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white border border-slate-100 overflow-hidden`}>
+                                <img src="auxi.png" alt="AI Logo" className="w-full h-full object-contain p-1.5" />
+                              </div>
+                            ) : (
+                              avatarUrl && !avatarUrl.startsWith('blob:') ? (
+                                <img src={avatarUrl} alt="User" className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">
+                                  {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                              )
+                            )}
+                            
+                            <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-2xl shadow-sm flex flex-col ${
+                              isAI 
+                                ? 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm' 
+                                : 'bg-indigo-600 text-white rounded-br-sm'
+                            }`}>
+                              <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Typing Indicator */}
+                      {isSparkTyping && (
+                        <div className="flex items-end gap-3 flex-row animate-fade-in">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white border border-slate-100 overflow-hidden`}>
+                            <img src="auxi.png" alt="AI Logo" className="w-full h-full object-contain p-1.5" />
+                          </div>
+                          <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-bl-sm shadow-sm flex gap-1 items-center h-13">
+                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
+                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
+                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={sparkChatEndRef} />
+                    </div>
+                    
+                    {/* BOTTOM DOCK INPUT (Only visible when chat is active) */}
+                    <div className="bg-white border-t border-slate-100 p-3 md:p-4 shrink-0 z-20 animate-fade-in-up">
+                      <form 
+                        onSubmit={handleSparkSubmit} 
+                        onClick={() => document.getElementById('sparkInputBox')?.focus()} 
+                        className="flex gap-2 relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all p-1 shadow-sm"
+                      >
+                        <textarea 
+                          id="sparkInputBox"
+                          value={sparkInput}
+                          onChange={(e) => setSparkInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSparkSubmit(e as any);
+                            }
+                          }}
+                          disabled={isSparkTyping}
+                          placeholder={`Ask ${selectedAIModel} a question...`}
+                          className="flex-1 bg-transparent px-4 py-3 text-sm md:text-base font-medium outline-none resize-none disabled:opacity-50 h-14 custom-scrollbar"
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={!sparkInput.trim() || isSparkTyping} 
+                          className="bg-[#0F172A] text-white w-12 h-12 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-[#0F172A] transition-colors self-end mb-1 mr-1 flex items-center justify-center cursor-pointer shadow-sm hover:-translate-y-0.5 active:translate-y-0 shrink-0"
+                        >
+                          <Icons.Send />
+                        </button>
+                      </form>
+                      <div className="text-center mt-2">
+                        <span className="text-[10px] text-slate-400 font-bold tracking-wide">{selectedAIModel} can make mistakes. Verify critical logic.</span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
               </div>
-            ) : (
-              // --- EXISTING CHAT UI ---
-              <>
-                {/* Header / Module Identity */}
-                <div className="bg-white rounded-t-3xl border border-slate-200 border-b-0 shadow-sm p-5 md:p-6 flex items-center justify-between shrink-0 z-10 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-                  <div className="flex items-center gap-4 relative z-10">
-                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md animate-pulse-glow">
-                      <span className="text-xl">✨</span>
-                    </div>
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-black text-[#0F172A]">Spark-1</h2>
-                      <p className="text-[10px] md:text-xs font-bold text-indigo-500 uppercase tracking-wider">Auxilink Engineering Intelligence</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-3 py-1 rounded-full font-bold flex items-center gap-2 shadow-sm">
-                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online
-                    </span>
-                  </div>
-                </div>
-
-                {/* AI Chat History */}
-                <div className="flex-1 bg-[#F8FAFC] border-x border-slate-200 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar flex flex-col">
-                  {sparkMessages.map((msg) => {
-                    const isAI = msg.role === 'ai';
-                    return (
-                      <div key={msg.id} className={`flex items-end gap-3 ${isAI ? 'flex-row' : 'flex-row-reverse'} animate-fade-in`}>
-                        {isAI ? (
-                          <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shrink-0">
-                            <span className="text-[10px]">✨</span>
-                          </div>
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">
-                            {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                          </div>
-                        )}
-                        
-                        <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-2xl shadow-sm flex flex-col ${
-                          isAI 
-                            ? 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm' 
-                            : 'bg-blue-600 text-white rounded-br-sm'
-                        }`}>
-                          <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Typing Indicator */}
-                  {isSparkTyping && (
-                    <div className="flex items-end gap-3 flex-row animate-fade-in">
-                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm shrink-0">
-                        <span className="text-[10px]">✨</span>
-                      </div>
-                      <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-bl-sm shadow-sm flex gap-1 items-center h-13">
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={sparkChatEndRef} />
-                </div>
-
-                {/* AI Chat Input Dock */}
-                <div className="bg-white rounded-b-3xl border border-slate-200 shadow-sm p-3 md:p-4 shrink-0 z-10">
-                  <form 
-                    onSubmit={handleSparkSubmit} 
-                    onClick={() => document.getElementById('sparkInputBox')?.focus()} 
-                    className="flex gap-2 relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all p-1"
-                  >
-                    <textarea 
-                      id="sparkInputBox"
-                      value={sparkInput}
-                      onChange={(e) => setSparkInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSparkSubmit(e as any);
-                        }
-                      }}
-                      disabled={isSparkTyping}
-                      placeholder="Ask Spark-1 about your coursework, request study plans, or debug code..."
-                      className="flex-1 bg-transparent px-4 py-3 text-sm md:text-base font-medium outline-none resize-none disabled:opacity-50 h-14 custom-scrollbar"
-                    />
-                    <button 
-                      type="submit" 
-                      disabled={!sparkInput.trim() || isSparkTyping} 
-                      className="bg-[#0F172A] text-white p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-[#0F172A] transition-colors self-end mb-1 mr-1 flex items-center justify-center cursor-pointer shadow-sm hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                      <Icons.Send />
-                    </button>
-                  </form>
-                  <div className="text-center mt-2">
-                    <span className="text-[10px] text-slate-400 font-bold tracking-wide">Spark-1 can make mistakes. Verify critical engineering formulas.</span>
-                  </div>
-                </div>
-              </>
-            )}
-
+            </div>
           </div>
         )}
 
