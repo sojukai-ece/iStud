@@ -12,6 +12,8 @@ interface ChatMessage { id: string; user_id: string; user_name: string; avatar_u
 interface Task { id: string; text: string; completed: boolean; }
 interface Milestone { id: string; title: string; date: string; location: string; color: string; }
 interface Profile { id: string; display_name: string; avatar_url: string; course: string; university: string; }
+interface FriendRequest { id: string; sender_id: string; receiver_id: string; status: string; profiles?: Profile; }
+interface StudyGroup { id: string; name: string; created_by: string; member_count?: number; }
 
 // --- 20-LEVEL PROGRESSION RANKS ---
 const RANKS = [
@@ -98,11 +100,23 @@ export default function Home() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // --- SOCIALS STATE ---
+  // --- NEW SOCIALS STATE ---
+  const [socialsSubTab, setSocialsSubTab] = useState<'search' | 'friends' | 'groups'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [friendsList, setFriendsList] = useState<Profile[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<string[]>([]);
+  const [studyGroups, setStudyGroups] = useState<StudyGroup[]>([]);
   const [isSearchingNetwork, setIsSearchingNetwork] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [selectedFriendsForGroup, setSelectedFriendsForGroup] = useState<string[]>([]);
+  
+  // --- NEW STUDY GROUP CHAT STATE ---
+  const [activeGroup, setActiveGroup] = useState<StudyGroup | null>(null);
+  const [groupMessages, setGroupMessages] = useState<ChatMessage[]>([]);
+  const [newGroupChatInput, setNewGroupChatInput] = useState('');
 
   // --- CREATOR STATUS STATE (TEAM) ---
   const [devStatus, setDevStatus] = useState<'Online' | 'Offline' | 'Updating'>('Offline');
@@ -226,7 +240,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- INITIALIZE & REALTIME ---
+  // --- INITIALIZE & GLOBAL REALTIME ---
   useEffect(() => {
     setDailyQuote(INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)]);
 
@@ -243,7 +257,6 @@ export default function Home() {
       }
 
       if (user) {
-        // Load stats
         const savedStats = localStorage.getItem(`istud_stats_${user.id}`);
         if (savedStats) {
           const parsed = JSON.parse(savedStats);
@@ -252,13 +265,11 @@ export default function Home() {
           setStudyTimeSeconds(parsed.studyTimeSeconds || 0);
         }
         
-        // Load tasks & milestones
         const savedTasks = localStorage.getItem(`istud_tasks_${user.id}`);
         if (savedTasks) setTasks(JSON.parse(savedTasks));
         const savedMilestones = localStorage.getItem(`istud_milestones_${user.id}`);
         if (savedMilestones) setMilestones(JSON.parse(savedMilestones));
 
-        // ACTUAL CALENDAR STREAK CHECK
         const todayStr = new Date().toDateString(); 
         const lastLoginKey = `istud_lastlogin_v2_${user.id}`;
         const streakKey = `istud_streak_v2_${user.id}`;
@@ -273,11 +284,8 @@ export default function Home() {
             const diffTime = todayDate.getTime() - lastDate.getTime();
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays === 1) {
-              currentStreak += 1;
-            } else if (diffDays > 1) {
-              currentStreak = 1;
-            }
+            if (diffDays === 1) currentStreak += 1;
+            else if (diffDays > 1) currentStreak = 1;
           }
         }
         
@@ -285,11 +293,9 @@ export default function Home() {
         localStorage.setItem(lastLoginKey, todayStr);
         localStorage.setItem(streakKey, currentStreak.toString());
 
-        // Fetch Folders
         const { data: folderData } = await supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
         if (folderData) setFolders(folderData);
 
-        // Fetch ALL Flashcards for Daily Challenge
         const { data: allCards } = await supabase.from('flashcards').select('*').eq('user_id', user.id);
         if (allCards && allCards.length > 0) {
           const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
@@ -307,7 +313,7 @@ export default function Home() {
           setDailyOptions([randomCard.answer, ...wrongOptions].sort(() => Math.random() - 0.5));
         }
 
-        fetchFriendsList(user.id);
+        fetchNetworkData(user.id);
       }
       
       const { data: chatData } = await supabase.from('community_messages').select('*').order('created_at', { ascending: true });
@@ -330,6 +336,42 @@ export default function Home() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // --- STUDY GROUP CHAT REALTIME EFFECT ---
+  useEffect(() => {
+    if (!activeGroup) return;
+
+    // Fetch existing messages for this group
+    const fetchGroupMessages = async () => {
+      const { data } = await supabase
+        .from('study_group_messages')
+        .select('*')
+        .eq('group_id', activeGroup.id)
+        .order('created_at', { ascending: true });
+      if (data) setGroupMessages(data);
+    };
+    fetchGroupMessages();
+
+    // Subscribe to new messages specifically for this group
+    const groupChannel = supabase
+      .channel(`group-${activeGroup.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'study_group_messages',
+        filter: `group_id=eq.${activeGroup.id}`
+      }, (payload) => {
+        const newMessage = payload.new as ChatMessage;
+        setGroupMessages((prev) => {
+          if (prev.find(msg => msg.id === newMessage.id)) return prev;
+          return [...prev, newMessage];
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(groupChannel); };
+  }, [activeGroup]);
+
+
   // --- LOCAL PERSISTENCE EFFECTS ---
   useEffect(() => {
     if (user) {
@@ -339,21 +381,58 @@ export default function Home() {
     }
   }, [cardsReviewed, correctAnswers, studyTimeSeconds, tasks, milestones, user]);
 
-  // --- SOCIALS LOGIC ---
-  const fetchFriendsList = async (userId: string) => {
-    // Note: Requires backend 'friends' table mapped to 'profiles' view
+  // --- COMPLETELY REWRITTEN SOCIALS / NETWORK LOGIC ---
+  const fetchNetworkData = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('friends')
-        .select(`friend_id, profiles!friends_friend_id_fkey(id, display_name, avatar_url, course, university)`)
-        .eq('user_id', userId);
+      const { data: incomingRequests } = await supabase
+        .from('friend_requests')
+        .select(`id, sender_id, receiver_id, status, profiles!friend_requests_sender_id_fkey(id, display_name, avatar_url, course, university)`)
+        .eq('receiver_id', userId)
+        .eq('status', 'pending');
+      
+      if (incomingRequests) setPendingRequests(incomingRequests as any);
+
+      const { data: outgoingRequests } = await supabase
+        .from('friend_requests')
+        .select('receiver_id')
+        .eq('sender_id', userId)
+        .eq('status', 'pending');
+      
+      if (outgoingRequests) setSentRequests(outgoingRequests.map(r => r.receiver_id));
+
+      const { data: acceptedAsSender } = await supabase
+        .from('friend_requests')
+        .select(`profiles!friend_requests_receiver_id_fkey(id, display_name, avatar_url, course, university)`)
+        .eq('sender_id', userId)
+        .eq('status', 'accepted');
         
-      if (!error && data) {
-        const parsedFriends = data.map((f: any) => f.profiles).filter(Boolean);
-        setFriendsList(parsedFriends);
+      const { data: acceptedAsReceiver } = await supabase
+        .from('friend_requests')
+        .select(`profiles!friend_requests_sender_id_fkey(id, display_name, avatar_url, course, university)`)
+        .eq('receiver_id', userId)
+        .eq('status', 'accepted');
+
+      const friendsListRaw = [
+        ...(acceptedAsSender?.map(r => (r as any).profiles) || []),
+        ...(acceptedAsReceiver?.map(r => (r as any).profiles) || [])
+      ].filter(Boolean);
+      
+      setFriendsList(friendsListRaw);
+
+      const { data: groups } = await supabase
+        .from('study_groups')
+        .select(`id, name, created_by, study_group_members(count)`);
+        
+      if (groups) {
+        const formattedGroups = groups.map(g => ({
+          id: g.id, name: g.name, created_by: g.created_by,
+          member_count: g.study_group_members?.[0]?.count || 1
+        }));
+        setStudyGroups(formattedGroups);
       }
+
     } catch (err) {
-      console.log("Database relationships not set up yet.");
+      console.log("Database relationships missing or RLS error.", err);
     }
   };
 
@@ -362,7 +441,6 @@ export default function Home() {
     if (!searchQuery.trim() || !user) return;
     setIsSearchingNetwork(true);
     
-    // Search the public profiles table for matches (excluding yourself)
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -371,29 +449,96 @@ export default function Home() {
       .limit(10);
       
     setIsSearchingNetwork(false);
-    if (!error && data) {
-      setSearchResults(data);
-    }
+    if (!error && data) setSearchResults(data);
   };
 
-  const handleAddFriend = async (friendProfile: Profile) => {
+  const handleSendFriendRequest = async (receiverId: string) => {
     if (!user) return;
-    // Optimistic UI Update
-    setFriendsList((prev) => [...prev, friendProfile]);
+    setSentRequests(prev => [...prev, receiverId]);
     
-    const { error } = await supabase.from('friends').insert([
-      { user_id: user.id, friend_id: friendProfile.id }
+    const { error } = await supabase.from('friend_requests').insert([
+      { sender_id: user.id, receiver_id: receiverId, status: 'pending' }
     ]);
+    
     if (error) {
-       alert("Error adding friend. Ensure tables are created.");
-       setFriendsList((prev) => prev.filter(f => f.id !== friendProfile.id));
-    }
+       alert("Error sending request.");
+       setSentRequests(prev => prev.filter(id => id !== receiverId));
+    } else alert("Friend request sent!");
+  };
+
+  const handleAcceptRequest = async (requestId: string, friendProfile: Profile) => {
+    const { error } = await supabase
+      .from('friend_requests')
+      .update({ status: 'accepted' })
+      .eq('id', requestId);
+      
+    if (!error) {
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      setFriendsList(prev => [...prev, friendProfile]);
+    } else alert("Error accepting request.");
+  };
+
+  const handleDeclineRequest = async (requestId: string) => {
+    const { error } = await supabase.from('friend_requests').delete().eq('id', requestId);
+    if (!error) setPendingRequests(prev => prev.filter(r => r.id !== requestId));
   };
 
   const handleRemoveFriend = async (friendId: string) => {
     if (!user) return;
-    setFriendsList((prev) => prev.filter(f => f.id !== friendId));
-    await supabase.from('friends').delete().match({ user_id: user.id, friend_id: friendId });
+    await supabase.from('friend_requests').delete()
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
+    
+    setFriendsList(prev => prev.filter(f => f.id !== friendId));
+  };
+
+  const handleCreateStudyGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupName.trim() || !user) return;
+    
+    const { data: newGroup, error: groupError } = await supabase
+      .from('study_groups')
+      .insert([{ name: newGroupName, created_by: user.id }])
+      .select()
+      .single();
+      
+    if (groupError || !newGroup) return alert("Failed to create group.");
+    
+    const membersToInsert = [
+      { group_id: newGroup.id, user_id: user.id }, 
+      ...selectedFriendsForGroup.map(friendId => ({ group_id: newGroup.id, user_id: friendId }))
+    ];
+    
+    await supabase.from('study_group_members').insert(membersToInsert);
+    
+    setStudyGroups(prev => [...prev, { id: newGroup.id, name: newGroup.name, created_by: user.id, member_count: membersToInsert.length }]);
+    setIsCreatingGroup(false); setNewGroupName(''); setSelectedFriendsForGroup([]);
+  };
+
+  const toggleFriendForGroup = (friendId: string) => {
+    setSelectedFriendsForGroup(prev => 
+      prev.includes(friendId) ? prev.filter(id => id !== friendId) : [...prev, friendId]
+    );
+  };
+
+  const handleSendGroupMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupChatInput.trim() || !user || !activeGroup) return;
+    
+    const senderName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Guest Scholar';
+    const messageToSend = newGroupChatInput;
+    setNewGroupChatInput('');
+    
+    const safeAvatarToSend = avatarUrl.startsWith('blob:') ? user.user_metadata?.avatar_url : avatarUrl;
+    
+    const tempMessage: ChatMessage = { 
+      id: Date.now().toString(), user_id: user.id, user_name: senderName, 
+      avatar_url: safeAvatarToSend, text: messageToSend, created_at: new Date().toISOString() 
+    };
+    
+    setGroupMessages((prev) => [...prev, tempMessage]);
+    await supabase.from('study_group_messages').insert([{ 
+      group_id: activeGroup.id, user_id: user.id, user_name: senderName, avatar_url: safeAvatarToSend, text: messageToSend 
+    }]);
   };
 
 
@@ -442,19 +587,17 @@ export default function Home() {
     await supabase.auth.signOut();
     setUser(null); setFolders([]); setActiveTab('dashboard');
     setCardsReviewed(0); setCorrectAnswers(0); setStudyTimeSeconds(0); setTasks([]);
-    setFriendsList([]);
+    setFriendsList([]); setPendingRequests([]); setStudyGroups([]); setActiveGroup(null);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     
-    // Update local auth metadata
     const { data, error } = await supabase.auth.updateUser({ 
       data: { display_name: displayName, avatar_url: avatarUrl, university: university, course: course, bio: bio } 
     });
     
-    // Sync with public profiles table explicitly just in case trigger fails
     await supabase.from('profiles').upsert({
       id: user.id, display_name: displayName, avatar_url: avatarUrl, course: course, university: university
     });
@@ -587,15 +730,10 @@ export default function Home() {
     
     const updated = [...milestones, newM].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setMilestones(updated);
-    setNewMilestoneTitle('');
-    setNewMilestoneDate('');
-    setNewMilestoneLocation('');
-    setIsAddingMilestone(false);
+    setNewMilestoneTitle(''); setNewMilestoneDate(''); setNewMilestoneLocation(''); setIsAddingMilestone(false);
   };
 
-  const handleDeleteMilestone = (id: string) => {
-    setMilestones(milestones.filter(m => m.id !== id));
-  };
+  const handleDeleteMilestone = (id: string) => { setMilestones(milestones.filter(m => m.id !== id)); };
 
   // --- TASKS HUB ACTIONS ---
   const handleAddTask = (e: React.FormEvent) => {
@@ -728,7 +866,7 @@ export default function Home() {
       )}
 
       {/* --- AXI MASCOT --- */}
-      {activeTab !== 'community' && (
+      {activeTab !== 'community' && !activeGroup && (
         <div className="fixed bottom-20 md:bottom-8 right-6 z-50 flex flex-col items-end">
           <div className={`mb-3 bg-white border border-slate-200 shadow-xl p-4 rounded-2xl rounded-br-none max-w-50 transition-all duration-300 origin-bottom-right ${isAxiTalking ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
             <p className="text-xs font-bold text-slate-700 leading-relaxed">{axiMessage}</p>
@@ -745,19 +883,20 @@ export default function Home() {
 
       {/* --- MOBILE TOP HEADER --- */}
       <div className="md:hidden flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-slate-200 px-5 py-4 shrink-0 z-40 sticky top-0">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); setActiveGroup(null); }}>
           <div className="text-2xl font-black tracking-tighter text-[#0F172A]">
             iSt<span className="text-blue-600">u</span>d
           </div>
         </div>
         <div className="flex items-center gap-4">
            {user && (
-             <button onClick={() => setActiveTab('socials')} className={`transition-transform hover:scale-110 ${activeTab === 'socials' ? 'text-blue-600' : 'text-slate-400'}`}>
+             <button onClick={() => { setActiveTab('socials'); setActiveGroup(null); }} className={`relative transition-transform hover:scale-110 ${activeTab === 'socials' ? 'text-blue-600' : 'text-slate-400'}`}>
                <Icons.Users />
+               {pendingRequests.length > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>}
              </button>
            )}
           {user ? (
-            <button onClick={() => setActiveTab('profile')} className={`flex items-center active:scale-95 transition-transform rounded-full border-2 ${activeTab === 'profile' ? 'border-blue-600 p-0.5' : 'border-transparent'}`}>
+            <button onClick={() => { setActiveTab('profile'); setActiveGroup(null); }} className={`flex items-center active:scale-95 transition-transform rounded-full border-2 ${activeTab === 'profile' ? 'border-blue-600 p-0.5' : 'border-transparent'}`}>
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm" />
               ) : (
@@ -773,7 +912,7 @@ export default function Home() {
       {/* --- SIDEBAR (Desktop) --- */}
       <aside className="hidden md:flex flex-col w-65 bg-white border-r border-slate-200 h-full fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar">
         <div className="p-6 pb-4">
-          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }}>
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); setActiveGroup(null); }}>
             <div className="text-3xl font-black tracking-tighter text-[#0F172A] group-hover:scale-105 transition-transform origin-left">
               iSt<span className="text-blue-600">u</span>d
             </div>
@@ -781,25 +920,25 @@ export default function Home() {
         </div>
 
         <nav className="px-4 py-2 flex flex-col gap-2">
-          <button onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+          <button onClick={() => { setActiveTab('dashboard'); setSelectedFolder(null); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
             <span className={activeTab === 'dashboard' ? 'text-blue-600' : ''}><Icons.Home /></span> Home
           </button>
-          <button onClick={() => { setActiveTab('focus-hub'); setSelectedFolder(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'focus-hub' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+          <button onClick={() => { setActiveTab('focus-hub'); setSelectedFolder(null); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'focus-hub' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
             <span className={activeTab === 'focus-hub' ? 'text-blue-600' : ''}><Icons.Focus /></span> Focus Hub
           </button>
-          <button onClick={() => { setActiveTab('decks'); setSelectedFolder(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'decks' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+          <button onClick={() => { setActiveTab('decks'); setSelectedFolder(null); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'decks' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
             <span className={activeTab === 'decks' ? 'text-blue-600' : ''}><Icons.Decks /></span> My Decks
           </button>
-          <button onClick={() => setActiveTab('auxilink-ai')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'auxilink-ai' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+          <button onClick={() => { setActiveTab('auxilink-ai'); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'auxilink-ai' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
             <span className={activeTab === 'auxilink-ai' ? 'text-blue-600' : ''}><Icons.AI /></span> Auxilink AI
           </button>
-          <button onClick={() => setActiveTab('community')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'community' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+          <button onClick={() => { setActiveTab('community'); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'community' ? 'bg-slate-100 text-[#0F172A] shadow-sm translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
             <span className={activeTab === 'community' ? 'text-blue-600' : ''}><Icons.Chat /></span> Community Chat
           </button>
           
           {user ? (
             <>
-              <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 relative mt-2 border ${activeTab === 'profile' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
+              <button onClick={() => { setActiveTab('profile'); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 relative mt-2 border ${activeTab === 'profile' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
                 ) : (
@@ -810,8 +949,9 @@ export default function Home() {
               </button>
               
               {/* SOCIALS DESKTOP BUTTON */}
-              <button onClick={() => setActiveTab('socials')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 mt-1 border ${activeTab === 'socials' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
+              <button onClick={() => { setActiveTab('socials'); setActiveGroup(null); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 mt-1 border relative ${activeTab === 'socials' && !activeGroup ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm translate-x-1' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-200'}`}>
                 <span className={activeTab === 'socials' ? 'text-blue-600' : ''}><Icons.Users /></span> Network
+                {pendingRequests.length > 0 && <span className="absolute right-4 top-3.5 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingRequests.length}</span>}
               </button>
             </>
           ) : (
@@ -837,7 +977,7 @@ export default function Home() {
           { id: 'auxilink-ai', icon: <Icons.AI />, label: 'AI' }, 
           { id: 'community', icon: <Icons.Chat />, label: 'Chat' }
         ].map((tab, i) => (
-          <button key={i} onClick={() => { setActiveTab(tab.id as any); if(tab.action) tab.action(); }} className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all flex-1 ${activeTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
+          <button key={i} onClick={() => { setActiveTab(tab.id as any); setActiveGroup(null); if(tab.action) tab.action(); }} className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all flex-1 ${activeTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
             <div className={`${activeTab === tab.id ? 'scale-110 transition-transform' : ''}`}>
               {tab.icon}
             </div>
@@ -1080,104 +1220,301 @@ export default function Home() {
           </div>
         )}
 
-        {/* SOCIALS / NETWORK HUB */}
+        {/* SOCIALS / NETWORK HUB (WITH SPECIFIC GROUP CHAT) */}
         {activeTab === 'socials' && user && (
-          <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col gap-6 md:gap-10">
-            <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-100 pb-5 md:pb-6 mb-5 md:mb-6">
-                <div>
-                  <h2 className="text-xl md:text-3xl font-black text-[#0F172A] flex items-center gap-3">
-                    <Icons.Users /> My Network
-                  </h2>
-                  <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Connect, collaborate, and compete with other students.</p>
+          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col gap-6 md:gap-10 h-full">
+            
+            {/* If a group is active, show the Group Hub Chatroom instead of the main network view */}
+            {activeGroup ? (
+              <div className="bg-white rounded-3xl md:rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full min-h-[70vh] md:min-h-150 overflow-hidden">
+                <div className="p-4 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => setActiveGroup(null)} className="text-slate-400 hover:text-[#0F172A] transition-colors" title="Back to Squads">
+                      ←
+                    </button>
+                    <div>
+                      <h3 className="text-lg md:text-xl font-black text-[#0F172A] leading-tight">{activeGroup.name}</h3>
+                      <p className="text-[10px] md:text-xs font-bold text-slate-500">{activeGroup.member_count} Members • Private Squad</p>
+                    </div>
+                  </div>
+                  <span className="bg-blue-100 text-blue-700 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-bold flex items-center gap-1.5 md:gap-2 shadow-sm"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 animate-pulse"></span> Live Hub</span>
                 </div>
                 
-                {/* Search Bar */}
-                <form onSubmit={handleSearchNetwork} className="w-full md:w-auto relative flex">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                     <Icons.Search />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Find friends by name..."
-                    className="w-full md:w-72 bg-slate-50 border border-slate-200 pl-11 pr-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-5 bg-[#F8FAFC]">
+                  {groupMessages.length === 0 ? (
+                    <p className="text-center text-slate-400 font-bold mt-10 text-sm md:text-base">Start the discussion! Drop a tough question or study notes here.</p>
+                  ) : (
+                    groupMessages.map((msg) => { 
+                      const isMe = user?.id === msg.user_id; 
+                      const displayAvatar = (isMe && avatarUrl) ? avatarUrl : msg.avatar_url;
+                      
+                      return ( 
+                        <div key={msg.id} className={`flex items-end gap-2 md:gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'} animate-fade-in`}>
+                          {displayAvatar && !displayAvatar.startsWith('blob:') ? (
+                            <img src={displayAvatar} alt="Avatar" className="w-8 h-8 min-w-8 min-h-8 aspect-square rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
+                          ) : (
+                            <div className="w-8 h-8 min-w-8 min-h-8 aspect-square rounded-full bg-blue-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">{msg.user_name.charAt(0).toUpperCase()}</div>
+                          )}
+                          <div className={`max-w-[85%] md:max-w-md p-3 md:p-4 rounded-2xl shadow-sm flex flex-col ${isMe ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm'}`}> 
+                            <span className={`font-bold text-[9px] md:text-[10px] uppercase tracking-wider mb-1 ${isMe ? 'text-blue-200 text-right' : 'text-slate-400'}`}>
+                              {isMe ? 'You' : msg.user_name}
+                            </span> 
+                            <p className="text-sm md:text-base font-medium leading-relaxed">{msg.text}</p> 
+                          </div> 
+                        </div>
+                      ); 
+                    })
+                  )}
+                </div>
+                
+                <form 
+                  onSubmit={handleSendGroupMessage} 
+                  onClick={() => document.getElementById('groupChatInput')?.focus()} 
+                  className="p-3 md:p-4 bg-white border-t border-slate-100 flex gap-2 shrink-0 cursor-text"
+                >
+                  <input 
+                    id="groupChatInput"
+                    type="text" 
+                    value={newGroupChatInput} 
+                    onChange={(e) => setNewGroupChatInput(e.target.value)} 
+                    placeholder="Type a message to the squad..." 
+                    disabled={isUploadingAvatar} 
+                    className="flex-1 bg-slate-50 px-4 md:px-5 py-3 rounded-xl text-base md:text-sm font-bold outline-none focus:border-blue-400 border border-slate-200 disabled:opacity-50 transition-colors" 
                   />
-                  <button type="submit" className="hidden">Search</button>
+                  <button type="submit" disabled={!newGroupChatInput.trim() || isUploadingAvatar} className="bg-[#0F172A] text-white px-4 md:px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-50 shrink-0 transition-colors cursor-pointer">
+                    {isUploadingAvatar ? 'Wait...' : 'Send'}
+                  </button>
                 </form>
               </div>
-
-              {/* SEARCH RESULTS VIEW */}
-              {searchQuery && searchResults.length > 0 && (
-                <div className="mb-10">
-                  <h3 className="font-extrabold text-[#0F172A] mb-4 flex items-center gap-2">Search Results</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {searchResults.map((p) => {
-                      const isFriend = friendsList.some(f => f.id === p.id);
-                      return (
-                        <div key={p.id} className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100">
-                          {p.avatar_url ? (
-                             <img src={p.avatar_url} alt="Profile" className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
-                          ) : (
-                             <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-lg font-bold shrink-0">{p.display_name?.charAt(0).toUpperCase() || '?'}</div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm text-[#0F172A] truncate">{p.display_name}</p>
-                            <p className="text-[10px] md:text-xs text-slate-500 truncate">{p.course || 'Scholar'}</p>
-                          </div>
-                          {!isFriend ? (
-                            <button onClick={() => handleAddFriend(p)} className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer shrink-0">
-                              <Icons.UserPlus />
-                            </button>
-                          ) : (
-                            <button className="bg-green-100 text-green-600 p-2 rounded-lg cursor-default shrink-0">
-                              <Icons.UserCheck />
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
+            ) : (
+              // MAIN NETWORK VIEW
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                
+                {/* Header & Sub-Navigation */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-100 pb-5 md:pb-6 mb-5 md:mb-6">
+                  <div>
+                    <h2 className="text-xl md:text-3xl font-black text-[#0F172A] flex items-center gap-3">
+                      <Icons.Users /> My Network
+                    </h2>
+                    <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Connect with fellow Iskolar ng Husay and form your ultimate study squad.</p>
+                  </div>
+                  
+                  <div className="flex bg-slate-100 p-1.5 rounded-xl w-full md:w-auto">
+                    <button onClick={() => setSocialsSubTab('friends')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${socialsSubTab === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Connections</button>
+                    <button onClick={() => setSocialsSubTab('groups')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${socialsSubTab === 'groups' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Study Groups</button>
+                    <button onClick={() => setSocialsSubTab('search')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all relative ${socialsSubTab === 'search' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                      Find
+                      {pendingRequests.length > 0 && <span className="absolute top-1.5 right-1.5 md:right-3 w-2 h-2 bg-red-500 rounded-full"></span>}
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {isSearchingNetwork && searchQuery && <p className="text-center text-sm font-bold text-blue-500 animate-pulse my-6">Searching servers...</p>}
-              {searchQuery && searchResults.length === 0 && !isSearchingNetwork && <p className="text-center text-sm font-bold text-slate-400 my-6">No scholars found matching "{searchQuery}".</p>}
-
-              {/* FRIENDS LIST */}
-              <div>
-                <h3 className="font-extrabold text-[#0F172A] mb-4">Connections</h3>
-                {friendsList.length === 0 ? (
-                  <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center flex flex-col items-center">
-                     <div className="text-4xl mb-4 opacity-50">🔌</div>
-                     <p className="font-bold text-slate-600 text-sm mb-1">Your network circuit is currently open.</p>
-                     <p className="font-medium text-slate-400 text-xs">Search for classmates and friends above to close the loop!</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                     {friendsList.map(friend => (
-                        <div key={friend.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
-                           {friend.avatar_url ? (
-                              <img src={friend.avatar_url} alt="Profile" className="w-14 h-14 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
-                           ) : (
-                              <div className="w-14 h-14 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xl font-bold shrink-0">{friend.display_name?.charAt(0).toUpperCase() || '?'}</div>
-                           )}
-                           <div className="flex-1 min-w-0">
-                              <p className="font-black text-sm text-[#0F172A] truncate">{friend.display_name}</p>
-                              <p className="text-[10px] md:text-xs text-blue-600 font-bold truncate mt-0.5">{friend.course || 'Engineering Student'}</p>
-                              <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.university}</p>
-                           </div>
-                           <button onClick={() => handleRemoveFriend(friend.id)} className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer md:opacity-0 group-hover:opacity-100">
-                             <Icons.Trash />
-                           </button>
-                        </div>
-                     ))}
+                {/* VIEW: CONNECTIONS (Friends) */}
+                {socialsSubTab === 'friends' && (
+                  <div className="animate-fade-in">
+                    <h3 className="font-extrabold text-[#0F172A] mb-4">My Friends ({friendsList.length})</h3>
+                    {friendsList.length === 0 ? (
+                      <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center flex flex-col items-center">
+                         <div className="text-4xl mb-4 opacity-50">🔌</div>
+                         <p className="font-bold text-slate-600 text-sm mb-1">Your network circuit is currently open.</p>
+                         <p className="font-medium text-slate-400 text-xs mb-4">Search for classmates to close the loop!</p>
+                         <button onClick={() => setSocialsSubTab('search')} className="bg-[#0F172A] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800">Find Friends</button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                         {friendsList.map(friend => (
+                            <div key={friend.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+                               {friend.avatar_url ? (
+                                  <img src={friend.avatar_url} alt="Profile" className="w-14 h-14 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                               ) : (
+                                  <div className="w-14 h-14 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xl font-bold shrink-0">{friend.display_name?.charAt(0).toUpperCase() || '?'}</div>
+                               )}
+                               <div className="flex-1 min-w-0">
+                                  <p className="font-black text-sm text-[#0F172A] truncate">{friend.display_name}</p>
+                                  <p className="text-[10px] md:text-xs text-blue-600 font-bold truncate mt-0.5">{friend.course || 'Engineering Student'}</p>
+                                  <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.university}</p>
+                               </div>
+                               <button onClick={() => handleRemoveFriend(friend.id)} className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer md:opacity-0 group-hover:opacity-100" title="Remove Connection">
+                                 <Icons.Trash />
+                               </button>
+                            </div>
+                         ))}
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
 
-            </div>
+                {/* VIEW: STUDY GROUPS */}
+                {socialsSubTab === 'groups' && (
+                  <div className="animate-fade-in">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="font-extrabold text-[#0F172A]">My Squads</h3>
+                      <button onClick={() => setIsCreatingGroup(!isCreatingGroup)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors">+ New Group</button>
+                    </div>
+
+                    {isCreatingGroup && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6 animate-fade-in shadow-inner">
+                        <h4 className="font-bold text-sm mb-3">Form a New Study Group</h4>
+                        <form onSubmit={handleCreateStudyGroup}>
+                          <input 
+                            type="text" 
+                            required
+                            value={newGroupName} 
+                            onChange={(e) => setNewGroupName(e.target.value)} 
+                            placeholder="e.g., ECE Survival Squad for Hellish Exams" 
+                            className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 mb-4"
+                          />
+                          
+                          <p className="text-xs font-bold text-slate-500 mb-2">Select Members ({selectedFriendsForGroup.length} selected)</p>
+                          <div className="max-h-40 overflow-y-auto mb-4 space-y-2 custom-scrollbar">
+                            {friendsList.length === 0 ? (
+                              <p className="text-xs text-slate-400 italic">You need friends to create a group!</p>
+                            ) : (
+                              friendsList.map(friend => (
+                                <div key={friend.id} onClick={() => toggleFriendForGroup(friend.id)} className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors ${selectedFriendsForGroup.includes(friend.id) ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:border-blue-100'}`}>
+                                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${selectedFriendsForGroup.includes(friend.id) ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300'}`}>
+                                    {selectedFriendsForGroup.includes(friend.id) && <span className="text-[10px] font-bold">✓</span>}
+                                  </div>
+                                  {friend.avatar_url ? (
+                                    <img src={friend.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center text-[8px] font-bold text-white">{friend.display_name?.charAt(0)}</div>
+                                  )}
+                                  <span className="text-xs font-bold text-slate-700 truncate">{friend.display_name}</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="submit" disabled={!newGroupName.trim() || selectedFriendsForGroup.length === 0} className="bg-[#0F172A] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 disabled:opacity-50">Create Group</button>
+                            <button type="button" onClick={() => {setIsCreatingGroup(false); setNewGroupName(''); setSelectedFriendsForGroup([]);}} className="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50">Cancel</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {studyGroups.length === 0 && !isCreatingGroup ? (
+                      <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center flex flex-col items-center">
+                         <div className="text-4xl mb-4 opacity-50">📚</div>
+                         <p className="font-bold text-slate-600 text-sm mb-1">No study groups yet.</p>
+                         <p className="font-medium text-slate-400 text-xs">Collaboration is key to surviving tough subjects!</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {studyGroups.map(group => (
+                          <div key={group.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                            <h4 className="font-black text-lg text-[#0F172A] relative z-10">{group.name}</h4>
+                            <p className="text-xs font-bold text-blue-600 mt-1 relative z-10">{group.member_count} Members</p>
+                            <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center relative z-10">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.created_by === user.id ? 'Admin' : 'Member'}</span>
+                              <button onClick={() => setActiveGroup(group)} className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors cursor-pointer">View Hub →</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* VIEW: SEARCH & REQUESTS */}
+                {socialsSubTab === 'search' && (
+                  <div className="animate-fade-in flex flex-col gap-8">
+                    
+                    {/* Pending Requests Section */}
+                    {pendingRequests.length > 0 && (
+                      <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6">
+                        <h3 className="font-extrabold text-blue-900 mb-4 flex items-center gap-2">
+                          Incoming Requests <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingRequests.length}</span>
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {pendingRequests.map(req => (
+                            <div key={req.id} className="bg-white rounded-2xl p-3 flex items-center gap-3 shadow-sm border border-blue-100">
+                              {req.profiles?.avatar_url ? (
+                                 <img src={req.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                              ) : (
+                                 <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">{req.profiles?.display_name?.charAt(0)}</div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-sm text-[#0F172A] truncate">{req.profiles?.display_name}</p>
+                                <p className="text-[10px] text-slate-500 truncate">{req.profiles?.course}</p>
+                              </div>
+                              <div className="flex gap-1 shrink-0">
+                                <button onClick={() => handleAcceptRequest(req.id, req.profiles!)} className="bg-blue-600 text-white p-1.5 rounded-lg hover:bg-blue-700 transition-colors" title="Accept">
+                                  <Icons.UserCheck />
+                                </button>
+                                <button onClick={() => handleDeclineRequest(req.id)} className="bg-slate-100 text-slate-500 p-1.5 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors" title="Decline">
+                                  <Icons.Trash />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Search Functionality */}
+                    <div>
+                      <h3 className="font-extrabold text-[#0F172A] mb-4">Find Scholars</h3>
+                      <form onSubmit={handleSearchNetwork} className="w-full relative flex mb-6">
+                        <button type="submit" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors z-10 cursor-pointer" title="Search">
+                           <Icons.Search />
+                        </button>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search by display name (Press Enter)..."
+                          className="w-full md:w-96 bg-slate-50 border border-slate-200 pl-11 pr-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                        />
+                      </form>
+
+                      {isSearchingNetwork && <p className="text-sm font-bold text-blue-500 animate-pulse">Searching servers...</p>}
+                      
+                      {searchQuery && searchResults.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {searchResults.map((p) => {
+                            const isFriend = friendsList.some(f => f.id === p.id);
+                            const isPendingSent = sentRequests.includes(p.id);
+                            
+                            return (
+                              <div key={p.id} className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100">
+                                {p.avatar_url ? (
+                                   <img src={p.avatar_url} alt="Profile" className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                                ) : (
+                                   <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-lg font-bold shrink-0">{p.display_name?.charAt(0).toUpperCase() || '?'}</div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-sm text-[#0F172A] truncate">{p.display_name}</p>
+                                  <p className="text-[10px] md:text-xs text-slate-500 truncate">{p.course || 'Scholar'}</p>
+                                </div>
+                                
+                                {!isFriend && !isPendingSent ? (
+                                  <button onClick={() => handleSendFriendRequest(p.id)} className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer shrink-0" title="Send Friend Request">
+                                    <Icons.UserPlus />
+                                  </button>
+                                ) : isPendingSent ? (
+                                  <button disabled className="bg-slate-200 text-slate-400 p-2 rounded-lg text-[10px] font-bold cursor-default shrink-0">
+                                    Pending
+                                  </button>
+                                ) : (
+                                  <button disabled className="bg-green-100 text-green-600 p-2 rounded-lg cursor-default shrink-0" title="Already connected">
+                                    <Icons.UserCheck />
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                      
+                      {searchQuery && searchResults.length === 0 && !isSearchingNetwork && <p className="text-sm font-bold text-slate-400">No scholars found matching "{searchQuery}".</p>}
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+            )}
           </div>
         )}
 
