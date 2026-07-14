@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 
-// --- TYPES ---
+// --- TYPES --- 
 interface Folder { id: string; name: string; user_id: string; }
 interface Flashcard { id: string; question: string; answer: string; }
 interface ChatMessage { id: string; user_id: string; user_name: string; avatar_url?: string; text: string; created_at: string; }
@@ -24,7 +24,7 @@ const RANKS = [
   { level: 5, title: 'Boolean Brawler', minExp: 500, icon: '⚔️', color: 'text-blue-600', bg: 'bg-blue-50', fill: 'bg-blue-500' },
   { level: 6, title: 'Gold Analyst', minExp: 750, icon: '⌨️', color: 'text-indigo-600', bg: 'bg-indigo-50', fill: 'bg-indigo-500' },
   { level: 7, title: 'Platinum Mind', minExp: 1050, icon: '📟', color: 'text-violet-600', bg: 'bg-violet-50', fill: 'bg-violet-500' },
-  { level: 8, title: 'Diamond Intellect', minExp: 1400, icon: '🗺️', color: 'text-purple-600', bg: 'bg-purple-50', fill: 'bg-purple-500' },
+  { level: 8, title: 'Diamond Intelex', minExp: 1400, icon: '🗺️', color: 'text-purple-600', bg: 'bg-purple-50', fill: 'bg-purple-500' },
   { level: 9, title: 'Algorithm Architect', minExp: 1800, icon: '📐', color: 'text-fuchsia-600', bg: 'bg-fuchsia-50', fill: 'bg-fuchsia-500' },
   { level: 10, title: 'Master Observer', minExp: 2250, icon: '🧙', color: 'text-pink-600', bg: 'bg-pink-50', fill: 'bg-pink-500' },
   { level: 11, title: 'Signal Processor', minExp: 2750, icon: '📡', color: 'text-rose-600', bg: 'bg-rose-50', fill: 'bg-rose-500' },
