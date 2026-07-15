@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 
-// --- TYPES --- 
+// --- TYPES ---
 interface Folder { id: string; name: string; user_id: string; }
 interface Flashcard { id: string; question: string; answer: string; }
 interface ChatMessage { id: string; user_id: string; user_name: string; avatar_url?: string; text: string; created_at: string; }
@@ -24,7 +24,7 @@ const RANKS = [
   { level: 5, title: 'Boolean Brawler', minExp: 500, icon: '⚔️', color: 'text-blue-600', bg: 'bg-blue-50', fill: 'bg-blue-500' },
   { level: 6, title: 'Gold Analyst', minExp: 750, icon: '⌨️', color: 'text-indigo-600', bg: 'bg-indigo-50', fill: 'bg-indigo-500' },
   { level: 7, title: 'Platinum Mind', minExp: 1050, icon: '📟', color: 'text-violet-600', bg: 'bg-violet-50', fill: 'bg-violet-500' },
-  { level: 8, title: 'Diamond Intelex', minExp: 1400, icon: '🗺️', color: 'text-purple-600', bg: 'bg-purple-50', fill: 'bg-purple-500' },
+  { level: 8, title: 'Diamond Intellect', minExp: 1400, icon: '🗺️', color: 'text-purple-600', bg: 'bg-purple-50', fill: 'bg-purple-500' },
   { level: 9, title: 'Algorithm Architect', minExp: 1800, icon: '📐', color: 'text-fuchsia-600', bg: 'bg-fuchsia-50', fill: 'bg-fuchsia-500' },
   { level: 10, title: 'Master Observer', minExp: 2250, icon: '🧙', color: 'text-pink-600', bg: 'bg-pink-50', fill: 'bg-pink-500' },
   { level: 11, title: 'Signal Processor', minExp: 2750, icon: '📡', color: 'text-rose-600', bg: 'bg-rose-50', fill: 'bg-rose-500' },
@@ -137,7 +137,7 @@ export default function Home() {
   const sparkChatEndRef = useRef<HTMLDivElement>(null);
   
   // Model Selection & History State
-  const [selectedAIModel, setSelectedAIModel] = useState<'Spark-1' | 'Helios 3'>('Spark-1');
+  const [selectedAIModel, setSelectedAIModel] = useState<'Helios 3' | 'Sonic 3.5'>('Helios 3');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
   const [isAIHistoryOpen, setIsAIHistoryOpen] = useState(true);
@@ -2179,8 +2179,8 @@ export default function Home() {
                           <img src="auxi.png" alt="AI" className="w-full h-full object-contain p-1" />
                         </div>
                         <span className="font-black text-xs md:text-sm text-[#0F172A]">{selectedAIModel}</span>
-                        <span className={`hidden md:inline-flex text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${selectedAIModel === 'Spark-1' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {selectedAIModel === 'Spark-1' ? 'Stable' : 'Dev'}
+                        <span className={`hidden md:inline-flex text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${selectedAIModel === 'Helios 3' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {selectedAIModel === 'Helios 3' ? 'Stable' : 'Dev'}
                         </span>
                         <Icons.ChevronDown />
                       </button>
@@ -2189,15 +2189,15 @@ export default function Home() {
                       {isModelDropdownOpen && (
                         <div className="absolute top-full left-0 mt-2 w-56 md:w-64 bg-white border border-slate-200 rounded-2xl p-2 shadow-xl z-50 animate-fade-in-up">
                           <button
-                            onClick={() => { setSelectedAIModel('Spark-1'); setIsModelDropdownOpen(false); }}
+                            onClick={() => { setSelectedAIModel('Helios 3'); setIsModelDropdownOpen(false); }}
                             className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all cursor-pointer text-left"
                           >
                             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 overflow-hidden border border-slate-100">
                                <img src="logo.png" alt="AI" className="w-full h-full object-contain p-1.5" />
                             </div>
                             <div>
-                              <span className="block text-sm font-black text-[#0F172A]">Spark-1</span>
-                              <span className="block text-[10px] font-bold text-green-600">Stable Release</span>
+                              <span className="block text-sm font-black text-[#0F172A]">Helios 3</span>
+                              <span className="block text-[10px] font-bold text-green-600">Currently Training</span>
                             </div>
                           </button>
                           
@@ -2210,7 +2210,7 @@ export default function Home() {
                                 <img src="logo.png" alt="AI" className="w-full h-full object-contain p-1.5 opacity-50" />
                               </div>
                               <div>
-                                <span className="block text-sm font-black text-slate-500">Helios 3</span>
+                                <span className="block text-sm font-black text-slate-500">Sonic 3.5</span>
                                 <span className="block text-[10px] font-bold text-amber-500">Deep Development</span>
                               </div>
                             </div>
