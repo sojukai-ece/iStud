@@ -1,38 +1,39 @@
 export async function POST(req: Request) {
   try {
-    // 1. EXTRACT 'message' instead of 'userMessage' to match the frontend payload
     const { message } = await req.json();
-    const baseUrl = process.env.NEXT_PUBLIC_AI_API_URL;
 
-    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    // 1. Point directly to the Hugging Face Router
+    const response = await fetch("https://router.huggingface.co/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", 
+        // 2. Authorize the request using your secure server-side token
+        "Authorization": `Bearer ${process.env.HF_TOKEN}`
       },
       body: JSON.stringify({
-        model: "sojukai/helios-3",
-        messages: [{ role: "user", content: message }], // Use the extracted 'message'
+        // 3. Ensure this exactly matches your model's repository ID on Hugging Face
+        model: "deepseek-ai/DeepSeek-V3", 
+        messages: [{ role: "user", content: message }],
         max_tokens: 250,
         temperature: 0.7,
       }),
     });
 
-    const data = await response.json();
+    const rawText = await response.text(); 
     
-    // 2. ERROR CATCHING: If the AI API returns a 400 or 500, catch it before it crashes
     if (!response.ok) {
-       console.error("LLM API Error:", data);
+       console.error("Hugging Face API Failed. Raw Response:", rawText);
        return Response.json(
-         { error: data.error?.message || "Failed to fetch from LLM API" }, 
+         { error: "Failed to fetch from Hugging Face API" }, 
          { status: response.status }
        );
     }
     
+    const data = JSON.parse(rawText);
+    
     return Response.json({ reply: data.choices[0].message.content });
 
   } catch (error) {
-    // 3. LOG FATAL ERRORS: This prints the exact crash reason to your terminal/Vercel logs
     console.error("Internal Server Error:", error);
     return Response.json({ error: "AI Server is currently unreachable" }, { status: 500 });
   }
