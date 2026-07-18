@@ -46,7 +46,7 @@ const AXI_QUOTES = [
   "Logic gates are cool, but have you tried getting 8 hours of sleep?",
   "Watch your signs! Remember, u = 2, not -2.",
   "Remember, the VOM formula derivation is V = R x V / Fsd!",
-  "Time to write some firmware for the ESP32?",
+  "Time to write some firmware?",
   "Don't forget to review those truth tables today!",
   "Take a 5-minute break. Your brain will thank you."
 ];
@@ -104,10 +104,10 @@ export default function Home() {
   const [isAxiTalking, setIsAxiTalking] = useState(false);
 
   // --- PROFILE SETTINGS STATE ---
-  const [displayName, setDisplayName] = useState('Benedict Fusin');
+  const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [university, setUniversity] = useState('Polytechnic University of the Philippines Sta. Mesa');
-  const [course, setCourse] = useState('Electronics Engineering');
+  const [university, setUniversity] = useState('');
+  const [course, setCourse] = useState('');
   const [bio, setBio] = useState('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -140,11 +140,7 @@ export default function Home() {
   const [selectedAIModel, setSelectedAIModel] = useState<'Helios 3' | 'Sonic 3.5'>('Helios 3');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   
-  const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([
-    "Explain the derivation of V = R x V / Fsd for a Volt-Ohm-Milliammeter.",
-    "Write a Python script to simulate an antenna pattern.",
-    "How to configure an ESP32 web server for IoT applications?"
-  ]);
+  const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
   const [isAIHistoryOpen, setIsAIHistoryOpen] = useState(true);
 
   // --- CREATOR STATUS STATE (TEAM) ---
@@ -309,24 +305,14 @@ export default function Home() {
         if (savedTasks) {
             setTasks(JSON.parse(savedTasks));
         } else {
-            // Default tailored tasks
-            setTasks([
-                { id: 't1', text: 'Finish SecuWear 2D drafting assembly', completed: false },
-                { id: 't2', text: 'AquaSmart IoT troubleshooting', completed: false },
-                { id: 't3', text: 'Prepare for Digital Electronics practical exam', completed: false }
-            ]);
+            setTasks([]);
         }
 
         const savedMilestones = localStorage.getItem(`istud_milestones_${user.id}`);
         if (savedMilestones) {
             setMilestones(JSON.parse(savedMilestones));
         } else {
-            // Default tailored milestones
-            setMilestones([
-                { id: 'm1', title: 'Digital Electronics Written Final Exam', date: '2026-07-25', location: 'Main Building', color: 'text-red-500 bg-red-50' },
-                { id: 'm2', title: 'Laboratory Experiment 1', date: '2026-07-20', location: 'Engineering Lab', color: 'text-blue-500 bg-blue-50' },
-                { id: 'm3', title: 'Laboratory Experiment 2', date: '2026-07-22', location: 'Engineering Lab', color: 'text-green-500 bg-green-50' }
-            ]);
+            setMilestones([]);
         }
 
         const todayStr = new Date().toDateString(); 
@@ -969,7 +955,7 @@ export default function Home() {
               d
             </h1>
             <div className="flex items-center gap-3 md:gap-4 text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
-              <span>Built by Benedict Fusin</span>
+              <span>Built by Team Members</span>
               <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
               <span className="text-slate-950 font-black">Auxilink Philippines</span>
             </div>
@@ -1663,8 +1649,8 @@ export default function Home() {
                   <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={handleAvatarUpload} />
                   
                   <h2 className="text-2xl font-black text-[#0F172A] text-center leading-tight">{displayName || user.email?.split('@')[0]}</h2>
-                  <p className="text-sm font-bold text-blue-600 mt-1">{course || 'Electronics Engineering'}</p>
-                  <p className="text-xs font-medium text-slate-500 mt-0.5 text-center px-4">{university || 'Polytechnic University of the Philippines'}</p>
+                  <p className="text-sm font-bold text-blue-600 mt-1">{course || 'Course Not Set'}</p>
+                  <p className="text-xs font-medium text-slate-500 mt-0.5 text-center px-4">{university || 'University Not Set'}</p>
                   
                   {/* GAMIFIED EXP PROFILE BANNER */}
                   <div className={`mt-6 w-full rounded-2xl p-4 flex flex-col gap-3 border ${rankDetails.bg} border-transparent`}>
