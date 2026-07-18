@@ -986,7 +986,7 @@ export default function Home() {
               d
             </h1>
             <div className="flex items-center gap-3 md:gap-4 text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
-              <span>Built by Team Members</span>
+              <span>Built by Benedict Fusin</span>
               <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
               <span className="text-slate-950 font-black">Auxilink Philippines</span>
             </div>
