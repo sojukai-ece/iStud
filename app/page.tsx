@@ -42,11 +42,11 @@ const RANKS = [
 // --- MASCOT QUOTES & EASTER EGGS ---
 const AXI_QUOTES = [
   "Ready to conquer some subjects? Let's go!",
-  "Remember to hydrate! A well-oiled machine runs best.",
+  "Always evaluate the calculation loop in a clockwise direction!",
   "Logic gates are cool, but have you tried getting 8 hours of sleep?",
-  "Built by 4 Developers... pretty impressive, right?",
-  "Simplifying Boolean algebra... just kidding, I'm just a mascot.",
-  "Focus mode: engaged. Distractions: eliminated.",
+  "Watch your signs! Remember, u = 2, not -2.",
+  "Remember, the VOM formula derivation is V = R x V / Fsd!",
+  "Time to write some firmware for the ESP32?",
   "Don't forget to review those truth tables today!",
   "Take a 5-minute break. Your brain will thank you."
 ];
@@ -104,10 +104,10 @@ export default function Home() {
   const [isAxiTalking, setIsAxiTalking] = useState(false);
 
   // --- PROFILE SETTINGS STATE ---
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState('Benedict Fusin');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [university, setUniversity] = useState('');
-  const [course, setCourse] = useState('');
+  const [university, setUniversity] = useState('Polytechnic University of the Philippines Sta. Mesa');
+  const [course, setCourse] = useState('Electronics Engineering');
   const [bio, setBio] = useState('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -139,7 +139,12 @@ export default function Home() {
   // Model Selection & History State
   const [selectedAIModel, setSelectedAIModel] = useState<'Helios 3' | 'Sonic 3.5'>('Helios 3');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
-  const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
+  
+  const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([
+    "Explain the derivation of V = R x V / Fsd for a Volt-Ohm-Milliammeter.",
+    "Write a Python script to simulate an antenna pattern.",
+    "How to configure an ESP32 web server for IoT applications?"
+  ]);
   const [isAIHistoryOpen, setIsAIHistoryOpen] = useState(true);
 
   // --- CREATOR STATUS STATE (TEAM) ---
@@ -301,9 +306,28 @@ export default function Home() {
         }
         
         const savedTasks = localStorage.getItem(`istud_tasks_${user.id}`);
-        if (savedTasks) setTasks(JSON.parse(savedTasks));
+        if (savedTasks) {
+            setTasks(JSON.parse(savedTasks));
+        } else {
+            // Default tailored tasks
+            setTasks([
+                { id: 't1', text: 'Finish SecuWear 2D drafting assembly', completed: false },
+                { id: 't2', text: 'AquaSmart IoT troubleshooting', completed: false },
+                { id: 't3', text: 'Prepare for Digital Electronics practical exam', completed: false }
+            ]);
+        }
+
         const savedMilestones = localStorage.getItem(`istud_milestones_${user.id}`);
-        if (savedMilestones) setMilestones(JSON.parse(savedMilestones));
+        if (savedMilestones) {
+            setMilestones(JSON.parse(savedMilestones));
+        } else {
+            // Default tailored milestones
+            setMilestones([
+                { id: 'm1', title: 'Digital Electronics Written Final Exam', date: '2026-07-25', location: 'Main Building', color: 'text-red-500 bg-red-50' },
+                { id: 'm2', title: 'Laboratory Experiment 1', date: '2026-07-20', location: 'Engineering Lab', color: 'text-blue-500 bg-blue-50' },
+                { id: 'm3', title: 'Laboratory Experiment 2', date: '2026-07-22', location: 'Engineering Lab', color: 'text-green-500 bg-green-50' }
+            ]);
+        }
 
         const todayStr = new Date().toDateString(); 
         const lastLoginKey = `istud_lastlogin_v2_${user.id}`;
