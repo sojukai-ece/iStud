@@ -1,27 +1,27 @@
+import { NextResponse } from 'next/server';
+
 export async function POST(req: Request) {
-  const { userMessage } = await req.json();
-  const baseUrl = process.env.NEXT_PUBLIC_AI_API_URL;
-
   try {
-    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", 
-      },
-      body: JSON.stringify({
-        model: "sojukai/helios-3",
-        messages: [{ role: "user", content: userMessage }],
-        max_tokens: 250,
-        temperature: 0.7,
-      }),
-    });
+    // 1. Parse the incoming request from your frontend
+    const body = await req.json();
+    const { prompt, model } = body;
 
-    const data = await response.json();
-    
-    return Response.json({ reply: data.choices[0].message.content });
+    if (!prompt) {
+      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    }
+
+    // 2. Do your AI processing here (Call OpenAI, Gemini, etc.)
+    // For now, this is your simulated response:
+    const aiResponseText = `I am a Vercel API simulated response to: "${prompt}" using ${model}`;
+
+    // 3. Send the response back to the frontend
+    return NextResponse.json({ reply: aiResponseText });
 
   } catch (error) {
-    return Response.json({ error: "AI Server is currently unreachable" }, { status: 500 });
+    console.error("API Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" }, 
+      { status: 500 }
+    );
   }
 }
