@@ -756,10 +756,10 @@ export default function Home() {
   };
 
   // --- SPARK-1 / HELIOS ACTION HANDLER ---
-  const sendSparkMessage = (text: string) => {
+  const sendSparkMessage = async (text: string) => {
     if (!text.trim()) return;
-    const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
     
+    const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
     setSparkMessages(prev => [...prev, newMsg]);
     
     // Add to history if unique
@@ -770,14 +770,45 @@ export default function Home() {
     setSparkInput('');
     setIsSparkTyping(true);
 
-    setTimeout(() => {
+    try {
+      // Replace '/api/chat' with the exact relative path to your Vercel API route if different
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: text,
+          model: selectedAIModel // Optional: passes 'Helios 3' to your backend if needed
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Assumes your API response looks like: { reply: "AI text response here" }
+      // Adjust 'data.reply' to match your actual backend payload key (e.g., data.text or data.choices[0].message.content)
+      const aiResponseText = data.reply || data.text || "No response field found in API payload.";
+
       setSparkMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString(),
         role: 'ai',
-        text: "I'm currently running in offline simulation mode, but I've processed your query! Integrate my endpoints with a production LLM API to bring my full capabilities online."
+        text: aiResponseText
       }]);
+
+    } catch (error) {
+      console.error("API Error:", error);
+      setSparkMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'ai',
+        text: "⚠️ Failed to connect to the live AI endpoint. Please check your network or Vercel logs."
+      }]);
+    } finally {
       setIsSparkTyping(false);
-    }, 1800);
+    }
   };
 
   const handleSparkSubmit = (e: React.FormEvent) => {
