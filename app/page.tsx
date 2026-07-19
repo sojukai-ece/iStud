@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 // --- TYPES ---
 interface Folder { id: string; name: string; user_id: string; }
@@ -986,7 +990,7 @@ export default function Home() {
               d
             </h1>
             <div className="flex items-center gap-3 md:gap-4 text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
-              <span>Built by Benedict Fusin</span>
+              <span>Built by Team Members</span>
               <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
               <span className="text-slate-950 font-black">Auxilink Philippines</span>
             </div>
@@ -1731,7 +1735,7 @@ export default function Home() {
                   
                   <div onClick={() => document.getElementById('bioText')?.focus()} className="cursor-text group">
                     <label htmlFor="bioText" className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2 ml-1 cursor-text group-hover:text-blue-500 transition-colors">Bio / Study Goals</label>
-                    <textarea id="bioText" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Share a bit about yourself or your academic goals..." className="w-full h-28 bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl text-sm font-medium outline-none focus:border-blue-500 focus:bg-white resize-none transition-colors" />
+                    <textarea id="bioText" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Share a bit about yourself or your academic goals..." className="w-full h-28 bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl text-sm font-medium outline-none focus:border-blue-500 focus:bg-white resize-none mb-6 md:mb-8 transition-all" />
                   </div>
                   
                   <div className="pt-2 flex justify-end">
@@ -2363,12 +2367,34 @@ export default function Home() {
                               )
                             )}
                             
-                            <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-2xl shadow-sm flex flex-col ${
+                            <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-2xl shadow-sm flex flex-col overflow-hidden ${
                               isAI 
                                 ? 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm' 
                                 : 'bg-indigo-600 text-white rounded-br-sm'
                             }`}>
-                              <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                              {isAI ? (
+                                <div className="text-sm md:text-base font-medium leading-relaxed markdown-body overflow-x-auto space-y-3">
+                                  <ReactMarkdown
+                                    remarkPlugins={[remarkMath]}
+                                    rehypePlugins={[rehypeKatex]}
+                                    components={{
+                                      p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
+                                      ul: ({node, ...props}: any) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                                      ol: ({node, ...props}: any) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                                      code: ({node, inline, ...props}: any) => 
+                                        inline ? (
+                                          <code className="bg-slate-100 text-blue-600 px-1 py-0.5 rounded text-xs" {...props} />
+                                        ) : (
+                                          <code className="block bg-slate-800 text-slate-100 p-3 rounded-lg text-xs overflow-x-auto my-2" {...props} />
+                                        )
+                                    }}
+                                  >
+                                    {msg.text}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : (
+                                <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                              )}
                             </div>
                           </div>
                         );
