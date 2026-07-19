@@ -95,6 +95,17 @@ const Icons = {
   Menu: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
 };
 
+// --- HELPER: FORMAT RAW LATEX ---
+// Fixes standard markdown delimiters \( \) to $ $ for Katex compatibility
+const formatLaTeX = (text: string) => {
+  if (!text) return text;
+  return text
+    .replace(/\\\(/g, '$')
+    .replace(/\\\)/g, '$')
+    .replace(/\\\[/g, '$$$')
+    .replace(/\\\]/g, '$$$');
+};
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'decks' | 'focus-hub' | 'auxilink-ai' | 'community' | 'socials' | 'profile'>('dashboard');
   const [user, setUser] = useState<any>(null);
@@ -763,19 +774,23 @@ export default function Home() {
   const sendSparkMessage = async (text: string) => {
     if (!text.trim()) return;
     
+    // Explicitly add 'Continue' command if passed exactly that way (used for the cutoff fallback)
     const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
-    setSparkMessages(prev => [...prev, newMsg]);
     
-    // Add to history if unique
-    if (!aiPromptHistory.includes(text)) {
-      setAiPromptHistory(prev => [text, ...prev]);
+    // If not a silent 'Continue' appended text, push to visual history
+    if (text !== 'Continue') {
+      setSparkMessages(prev => [...prev, newMsg]);
+      // Add to history if unique
+      if (!aiPromptHistory.includes(text)) {
+        setAiPromptHistory(prev => [text, ...prev]);
+      }
     }
     
     setSparkInput('');
     setIsSparkTyping(true);
 
     try {
-      // Replace '/api/chat' with the exact relative path to your Vercel API route if different
+      // SOLUTION 1: Adding 'max_tokens' payload explicit declaration
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -783,7 +798,8 @@ export default function Home() {
         },
         body: JSON.stringify({ 
           message: text,
-          model: selectedAIModel // Optional: passes 'Helios 3' to your backend if needed
+          model: selectedAIModel,
+          max_tokens: 4096 // explicitly tell API to allow longer generations
         }),
       });
 
@@ -793,15 +809,29 @@ export default function Home() {
 
       const data = await response.json();
       
-      // Assumes your API response looks like: { reply: "AI text response here" }
-      // Adjust 'data.reply' to match your actual backend payload key (e.g., data.text or data.choices[0].message.content)
       const aiResponseText = data.reply || data.text || "No response field found in API payload.";
 
-      setSparkMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'ai',
-        text: aiResponseText
-      }]);
+      // If 'Continue' was called, append to the last AI message rather than creating a new one
+      if (text === 'Continue') {
+        setSparkMessages(prev => {
+          const lastMsgIndex = prev.map(m => m.role).lastIndexOf('ai');
+          if (lastMsgIndex !== -1) {
+            const updatedMessages = [...prev];
+            updatedMessages[lastMsgIndex] = {
+              ...updatedMessages[lastMsgIndex],
+              text: updatedMessages[lastMsgIndex].text + " " + aiResponseText
+            };
+            return updatedMessages;
+          }
+          return prev;
+        });
+      } else {
+        setSparkMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'ai',
+          text: aiResponseText
+        }]);
+      }
 
     } catch (error) {
       console.error("API Error:", error);
@@ -1882,92 +1912,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* --- FOCUS HUB --- */}
-        {activeTab === 'focus-hub' && (
-          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-10">
-            <div className="flex-1 bg-white rounded-4xl p-6 md:p-12 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
-              <div className={`absolute inset-0 opacity-[0.03] transition-colors duration-1000 ${pomodoroMode === 'work' ? 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-blue-900 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-green-900 via-transparent to-transparent'}`}></div>
-              <div className="relative z-10 w-full flex flex-col items-center">
-                <div className="flex gap-4 mb-6">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Focus Time</label>
-                    <select value={selectedWorkTime} onChange={handleWorkTimeChange} disabled={pomodoroIsActive} className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 outline-none disabled:opacity-50 text-center cursor-pointer transition-colors">
-                      <option value={1500}>25 min</option>
-                      <option value={2700}>45 min</option>
-                      <option value={3600}>60 min</option>
-                      <option value={5400}>90 min</option>
-                      <option value={7200}>120 min</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Break Time</label>
-                    <select value={selectedBreakTime} onChange={handleBreakTimeChange} disabled={pomodoroIsActive} className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 outline-none disabled:opacity-50 text-center cursor-pointer transition-colors">
-                      <option value={300}>5 min</option>
-                      <option value={600}>10 min</option>
-                      <option value={900}>15 min</option>
-                      <option value={1200}>20 min</option>
-                      <option value={1800}>30 min</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200 w-full max-w-xs md:max-w-sm mb-8 md:mb-10">
-                  <button onClick={() => { setPomodoroIsActive(false); setPomodoroMode('work'); setPomodoroTime(selectedWorkTime); }} className={`flex-1 py-2 md:py-2.5 rounded-full font-bold text-xs md:text-sm transition-all cursor-pointer ${pomodoroMode === 'work' ? 'bg-white shadow-sm text-[#0F172A]' : 'text-slate-500 hover:text-slate-700'}`}>Focus</button>
-                  <button onClick={() => { setPomodoroIsActive(false); setPomodoroMode('break'); setPomodoroTime(selectedBreakTime); }} className={`flex-1 py-2 md:py-2.5 rounded-full font-bold text-xs md:text-sm transition-all cursor-pointer ${pomodoroMode === 'break' ? 'bg-white shadow-sm text-[#0F172A]' : 'text-slate-500 hover:text-slate-700'}`}>Break</button>
-                </div>
-
-                <div className="text-[5rem] sm:text-[6rem] md:text-[8rem] font-black text-[#0F172A] tracking-tighter tabular-nums mb-8 md:mb-10 leading-none drop-shadow-sm">
-                  {formatClock(pomodoroTime)}
-                </div>
-
-                <button onClick={() => setPomodoroIsActive(!pomodoroIsActive)} className={`w-full max-w-xs md:max-w-sm py-4 rounded-xl md:rounded-2xl font-black text-base md:text-lg transition-all duration-300 cursor-pointer ${pomodoroIsActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 shadow-inner' : 'bg-[#0F172A] text-white hover:bg-slate-800 shadow-lg hover:-translate-y-1'}`}>
-                  {pomodoroIsActive ? 'Pause Timer' : 'Start Timer'}
-                </button>
-              </div>
-            </div>
-
-            <div className="w-full lg:w-100 flex flex-col h-100 md:h-125 lg:h-auto bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <div className="p-5 md:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
-                <h3 className="text-base md:text-lg font-black text-[#0F172A]">Session Tasks</h3>
-                <span className="text-[10px] md:text-xs font-bold text-slate-400">{tasks.filter(t=>t.completed).length} / {tasks.length} Done</span>
-              </div>
-              <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-2 md:space-y-3 custom-scrollbar bg-white">
-                {tasks.length === 0 ? (
-                  <p className="text-center text-slate-400 font-bold mt-10 text-xs md:text-sm">Add tasks to focus on.</p>
-                ) : (
-                  tasks.map(task => (
-                    <div key={task.id} className={`flex items-center justify-between p-3 rounded-xl border ${task.completed ? 'bg-slate-50 border-slate-100' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5'} transition-all duration-200 group`}>
-                      <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => toggleTask(task.id)}>
-                        <button className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-colors ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-slate-300 group-hover:border-green-400'}`}>
-                          {task.completed && <span className="text-[10px] font-black">✓</span>}
-                        </button>
-                        <span className={`text-sm font-bold truncate transition-all ${task.completed ? 'line-through text-slate-400' : 'text-[#0F172A]'}`}>{task.text}</span>
-                      </div>
-                      <button onClick={() => deleteTask(task.id)} className="p-1.5 md:opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all rounded-md cursor-pointer">
-                        <Icons.Trash />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-              <form 
-                onSubmit={handleAddTask} 
-                onClick={() => document.getElementById('taskInput')?.focus()} 
-                className="p-3 md:p-4 border-t border-slate-100 bg-slate-50 shrink-0 cursor-text flex"
-              >
-                <input 
-                  id="taskInput"
-                  type="text" 
-                  value={newTaskInput} 
-                  onChange={(e) => setNewTaskInput(e.target.value)} 
-                  placeholder="Add a new task..." 
-                  className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-base md:text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-colors cursor-text" 
-                />
-              </form>
-            </div>
-          </div>
-        )}
-
         {/* ACTIVE RECALL UI */}
         {selectedFolder && activeStudyMode === 'active-recall' && activeTab === 'decks' && (
           <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in">
@@ -2349,64 +2293,84 @@ export default function Home() {
                     <div className="flex-1 bg-[#F8FAFC] overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar flex flex-col relative z-0">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
                       
-                      {sparkMessages.map((msg) => {
+                      {sparkMessages.map((msg, index) => {
                         const isAI = msg.role === 'ai';
+                        const isLastMessage = index === sparkMessages.length - 1;
+                        
+                        // NEW LOGIC: Determine if the last AI message ended abruptly (truncated)
+                        const textEndsAbruptly = isAI && msg.text && !['.', '!', '?', '"', '\'', '`', ':', '}'].includes(msg.text.trim().slice(-1));
+
                         return (
-                          <div key={msg.id} className={`flex items-end gap-3 ${isAI ? 'flex-row' : 'flex-row-reverse'} animate-fade-in`}>
-                            {isAI ? (
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white border border-slate-100 overflow-hidden`}>
-                                <img src="auxi.png" alt="AI Logo" className="w-full h-full object-contain p-1.5" />
-                              </div>
-                            ) : (
-                              avatarUrl && !avatarUrl.startsWith('blob:') ? (
-                                <img src={avatarUrl} alt="User" className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">
-                                  {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                                </div>
-                              )
-                            )}
-                            
-                            <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-2xl shadow-sm flex flex-col overflow-hidden ${
-                              isAI 
-                                ? 'bg-white border border-slate-200 text-[#0F172A] rounded-bl-sm' 
-                                : 'bg-indigo-600 text-white rounded-br-sm'
-                            }`}>
+                          <div key={msg.id} className="flex flex-col">
+                            <div className={`flex gap-3 ${isAI ? 'flex-row items-start' : 'flex-row-reverse items-end'} animate-fade-in`}>
                               {isAI ? (
-                                <div className="text-sm md:text-base font-medium leading-relaxed markdown-body overflow-x-auto space-y-3">
-                                  <ReactMarkdown
-                                    remarkPlugins={[remarkMath]}
-                                    rehypePlugins={[rehypeKatex]}
-                                    components={{
-                                      p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
-                                      ul: ({node, ...props}: any) => <ul className="list-disc pl-4 mb-2" {...props} />,
-                                      ol: ({node, ...props}: any) => <ol className="list-decimal pl-4 mb-2" {...props} />,
-                                      code: ({node, inline, ...props}: any) => 
-                                        inline ? (
-                                          <code className="bg-slate-100 text-blue-600 px-1 py-0.5 rounded text-xs" {...props} />
-                                        ) : (
-                                          <code className="block bg-slate-800 text-slate-100 p-3 rounded-lg text-xs overflow-x-auto my-2" {...props} />
-                                        )
-                                    }}
-                                  >
-                                    {msg.text}
-                                  </ReactMarkdown>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white border border-slate-100 overflow-hidden mt-0.5`}>
+                                  <img src="auxi.png" alt="AI Logo" className="w-full h-full object-contain p-1.5" />
                                 </div>
                               ) : (
-                                <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                                avatarUrl && !avatarUrl.startsWith('blob:') ? (
+                                  <img src={avatarUrl} alt="User" className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200 shadow-sm" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">
+                                    {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                                  </div>
+                                )
                               )}
+                              
+                              <div className={`max-w-[85%] md:max-w-[75%] flex flex-col overflow-hidden ${
+                                isAI 
+                                  ? 'text-[#0F172A] pt-1' 
+                                  : 'p-4 rounded-2xl shadow-sm bg-indigo-600 text-white rounded-br-sm'
+                              }`}>
+                                {isAI ? (
+                                  <div className="text-sm md:text-base font-medium leading-relaxed markdown-body overflow-x-auto space-y-3">
+                                    <ReactMarkdown
+                                      remarkPlugins={[remarkMath]}
+                                      rehypePlugins={[rehypeKatex]}
+                                      components={{
+                                        p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
+                                        ul: ({node, ...props}: any) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                                        ol: ({node, ...props}: any) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                                        code: ({node, inline, ...props}: any) => 
+                                          inline ? (
+                                            <code className="bg-slate-100 text-blue-600 px-1 py-0.5 rounded text-xs" {...props} />
+                                          ) : (
+                                            <code className="block bg-slate-800 text-slate-100 p-3 rounded-lg text-xs overflow-x-auto my-2" {...props} />
+                                          )
+                                      }}
+                                    >
+                                      {/* Apply formatting Fix to output correctly */}
+                                      {formatLaTeX(msg.text)}
+                                    </ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                                )}
+                              </div>
                             </div>
+
+                            {/* UI TRIGGER: FALLBACK BUTTON IF TEXT CUTS OFF */}
+                            {isAI && isLastMessage && textEndsAbruptly && !isSparkTyping && (
+                               <div className="pl-11 mt-1">
+                                  <button 
+                                    onClick={() => sendSparkMessage('Continue')}
+                                    className="text-[10px] md:text-xs font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 cursor-pointer transition-colors"
+                                  >
+                                    <Icons.Plus /> Output cut off. Click to continue generating.
+                                  </button>
+                               </div>
+                            )}
                           </div>
                         );
                       })}
                       
                       {/* Typing Indicator */}
                       {isSparkTyping && (
-                        <div className="flex items-end gap-3 flex-row animate-fade-in">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white border border-slate-100 overflow-hidden`}>
+                        <div className="flex items-start gap-3 flex-row animate-fade-in">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white border border-slate-100 overflow-hidden mt-0.5`}>
                             <img src="auxi.png" alt="AI Logo" className="w-full h-full object-contain p-1.5" />
                           </div>
-                          <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-bl-sm shadow-sm flex gap-1 items-center h-13">
+                          <div className="pt-3 flex gap-1 items-center h-10">
                             <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
                             <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
                             <div className="w-1.5 h-1.5 bg-slate-400 rounded-full spark-typing-dot"></div>
