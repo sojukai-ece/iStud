@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import ReactMarkdown from 'react-markdown';
@@ -110,6 +109,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'decks' | 'focus-hub' | 'auxilink-ai' | 'community' | 'socials' | 'profile'>('dashboard');
   const [user, setUser] = useState<any>(null);
   const [dailyQuote, setDailyQuote] = useState('');
+  const [greetingTime, setGreetingTime] = useState('day');
   
   // --- INTRO ANIMATION STATE ---
   const [introStage, setIntroStage] = useState<'active' | 'fading' | 'hidden'>('active');
@@ -127,7 +127,7 @@ export default function Home() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // --- NEW SOCIALS STATE ---
+  // --- SOCIALS STATE ---
   const [socialsSubTab, setSocialsSubTab] = useState<'search' | 'friends' | 'groups'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
@@ -140,26 +140,22 @@ export default function Home() {
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedFriendsForGroup, setSelectedFriendsForGroup] = useState<string[]>([]);
   
-  // --- NEW STUDY GROUP CHAT STATE ---
+  // --- STUDY GROUP CHAT STATE ---
   const [activeGroup, setActiveGroup] = useState<StudyGroup | null>(null);
   const [groupMessages, setGroupMessages] = useState<ChatMessage[]>([]);
   const [newGroupChatInput, setNewGroupChatInput] = useState('');
 
-  // --- NEW: AI ENHANCEMENTS STATE ---
+  // --- AI ENHANCEMENTS STATE ---
   const [sparkMessages, setSparkMessages] = useState<{id: string, role: 'user' | 'ai', text: string}[]>([]);
   const [sparkInput, setSparkInput] = useState('');
   const [isSparkTyping, setIsSparkTyping] = useState(false);
   const sparkChatEndRef = useRef<HTMLDivElement>(null);
   
-  // Model Selection & History State
   const [selectedAIModel, setSelectedAIModel] = useState<'Helios 3' | 'Sonic 3.5'>('Helios 3');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   
   const [aiPromptHistory, setAiPromptHistory] = useState<string[]>([]);
   const [isAIHistoryOpen, setIsAIHistoryOpen] = useState(true);
-
-  // --- CREATOR STATUS STATE (TEAM) ---
-  const [devStatus, setDevStatus] = useState<'Online' | 'Offline' | 'Updating'>('Offline');
 
   // --- STUDY HUB CORE STATE ---
   const [selectedTechnique, setSelectedTechnique] = useState<'active-recall' | 'feynman' | 'blurting'>('active-recall');
@@ -193,7 +189,7 @@ export default function Home() {
   const [studyTimeSeconds, setStudyTimeSeconds] = useState(0);
   const [activeStreak, setActiveStreak] = useState(1);
 
-  // --- NEW: EXP & RANK CALCULATION ---
+  // --- EXP & RANK CALCULATION ---
   const calculateExp = () => {
     return (cardsReviewed * 5) + (correctAnswers * 10) + Math.floor(studyTimeSeconds / 60) * 2;
   };
@@ -242,10 +238,6 @@ export default function Home() {
   const deckColors = ['bg-red-600', 'bg-green-500', 'bg-blue-600', 'bg-yellow-400', 'bg-purple-500', 'bg-teal-400'];
   const getDeckColor = (idx: number) => deckColors[idx % deckColors.length];
 
-  // --- GET TIME GREETING ---
-  const hour = new Date().getHours();
-  const greetingTime = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-
   // --- SPARK AI CHAT AUTO-SCROLL ---
   useEffect(() => {
     if (activeTab === 'auxilink-ai' && sparkMessages.length > 0) {
@@ -260,39 +252,10 @@ export default function Home() {
     return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
   }, []);
 
-  // --- GITHUB CREATOR STATUS EFFECT ---
-  useEffect(() => {
-    const fetchGithubStatus = async () => {
-      try {
-        const res = await fetch('https://api.github.com/users/sojukai-ece/events/public?per_page=1');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.length > 0) {
-            const lastEventDate = new Date(data[0].created_at);
-            const now = new Date();
-            const diffHours = (now.getTime() - lastEventDate.getTime()) / (1000 * 60 * 60);
-            
-            if (diffHours < 48) { 
-              if (data[0].type === 'PushEvent') setDevStatus('Updating');
-              else setDevStatus('Online');
-            } else {
-              setDevStatus('Offline');
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch creator status:", err);
-        setDevStatus('Offline');
-      }
-    };
-    
-    fetchGithubStatus();
-    const interval = setInterval(fetchGithubStatus, 300000); 
-    return () => clearInterval(interval);
-  }, []);
-
   // --- INITIALIZE & GLOBAL REALTIME ---
   useEffect(() => {
+    const hour = new Date().getHours();
+    setGreetingTime(hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening');
     setDailyQuote(INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)]);
 
     const init = async () => {
@@ -310,7 +273,7 @@ export default function Home() {
       if (user) {
         const savedStats = localStorage.getItem(`istud_stats_${user.id}`);
         if (savedStats) {
-          const parsed = JSON.parse(savedStats);
+          const parsed = JSON.parse(savedStats) as { cardsReviewed: number, correctAnswers: number, studyTimeSeconds: number };
           setCardsReviewed(parsed.cardsReviewed || 0);
           setCorrectAnswers(parsed.correctAnswers || 0);
           setStudyTimeSeconds(parsed.studyTimeSeconds || 0);
@@ -336,6 +299,7 @@ export default function Home() {
         
         const lastLoginStr = localStorage.getItem(lastLoginKey);
         let currentStreak = parseInt(localStorage.getItem(streakKey) || '1');
+        if (isNaN(currentStreak)) currentStreak = 1;
 
         if (lastLoginStr) {
           if (lastLoginStr !== todayStr) {
@@ -448,7 +412,7 @@ export default function Home() {
         .eq('receiver_id', userId)
         .eq('status', 'pending');
       
-      if (incomingRequests) setPendingRequests(incomingRequests as any);
+      if (incomingRequests) setPendingRequests(incomingRequests as unknown as FriendRequest[]);
 
       const { data: outgoingRequests } = await supabase
         .from('friend_requests')
@@ -471,8 +435,8 @@ export default function Home() {
         .eq('status', 'accepted');
 
       const friendsListRaw = [
-        ...(acceptedAsSender?.map(r => (r as any).profiles) || []),
-        ...(acceptedAsReceiver?.map(r => (r as any).profiles) || [])
+        ...(acceptedAsSender?.map(r => (r as unknown as { profiles: Profile }).profiles) || []),
+        ...(acceptedAsReceiver?.map(r => (r as unknown as { profiles: Profile }).profiles) || [])
       ].filter(Boolean);
       
       setFriendsList(friendsListRaw);
@@ -604,7 +568,7 @@ export default function Home() {
   const pokeMascot = () => {
     setIsAxiTalking(true);
     setAxiMessage(AXI_QUOTES[Math.floor(Math.random() * AXI_QUOTES.length)]);
-    setTimeout(() => setIsAxiTalking(false), 4000);
+    window.setTimeout(() => setIsAxiTalking(false), 4000);
   };
 
   // --- STUDY TIME TRACKER EFFECT ---
@@ -624,9 +588,18 @@ export default function Home() {
     } else if (pomodoroTime === 0 && pomodoroIsActive) {
       setPomodoroIsActive(false);
       alert(pomodoroMode === 'work' ? 'Time for a break!' : 'Break is over. Back to work!');
+      
+      // Auto-switch mode mechanism
+      if (pomodoroMode === 'work') {
+          setPomodoroMode('break');
+          setPomodoroTime(selectedBreakTime);
+      } else {
+          setPomodoroMode('work');
+          setPomodoroTime(selectedWorkTime);
+      }
     }
     return () => clearInterval(interval);
-  }, [pomodoroIsActive, pomodoroTime, pomodoroMode]);
+  }, [pomodoroIsActive, pomodoroTime, pomodoroMode, selectedWorkTime, selectedBreakTime]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -770,27 +743,41 @@ export default function Home() {
     }]);
   };
 
-  // --- SPARK-1 / HELIOS ACTION HANDLER ---
+  // --- SSE STREAMING HANDLER ---
   const sendSparkMessage = async (text: string) => {
     if (!text.trim()) return;
     
-    // Explicitly add 'Continue' command if passed exactly that way (used for the cutoff fallback)
-    const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
-    
-    // If not a silent 'Continue' appended text, push to visual history
-    if (text !== 'Continue') {
+    const isContinue = text === 'Continue';
+    let aiMessageId = Date.now().toString() + "-ai";
+    let existingText = "";
+
+    if (!isContinue) {
+      const newMsg = { id: Date.now().toString(), role: 'user' as const, text };
       setSparkMessages(prev => [...prev, newMsg]);
-      // Add to history if unique
+      
       if (!aiPromptHistory.includes(text)) {
         setAiPromptHistory(prev => [text, ...prev]);
       }
+      
+      setSparkMessages(prev => [...prev, { id: aiMessageId, role: 'ai', text: '' }]);
+    } else {
+      setSparkMessages(prev => {
+        const lastMsgIndex = prev.map(m => m.role).lastIndexOf('ai');
+        if (lastMsgIndex !== -1) {
+          aiMessageId = prev[lastMsgIndex].id;
+          existingText = prev[lastMsgIndex].text;
+        } else {
+          aiMessageId = Date.now().toString() + "-ai";
+          return [...prev, { id: aiMessageId, role: 'ai', text: '' }];
+        }
+        return prev;
+      });
     }
     
     setSparkInput('');
     setIsSparkTyping(true);
 
     try {
-      // SOLUTION 1: Adding 'max_tokens' payload explicit declaration
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -799,47 +786,51 @@ export default function Home() {
         body: JSON.stringify({ 
           message: text,
           model: selectedAIModel,
-          max_tokens: 4096 // explicitly tell API to allow longer generations
+          max_tokens: 8192
         }),
       });
 
-      if (!response.ok) {
+      if (!response.ok || !response.body) {
         throw new Error(`Server returned status: ${response.status}`);
       }
 
-      const data = await response.json();
-      
-      const aiResponseText = data.reply || data.text || "No response field found in API payload.";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let completeResponse = existingText;
 
-      // If 'Continue' was called, append to the last AI message rather than creating a new one
-      if (text === 'Continue') {
-        setSparkMessages(prev => {
-          const lastMsgIndex = prev.map(m => m.role).lastIndexOf('ai');
-          if (lastMsgIndex !== -1) {
-            const updatedMessages = [...prev];
-            updatedMessages[lastMsgIndex] = {
-              ...updatedMessages[lastMsgIndex],
-              text: updatedMessages[lastMsgIndex].text + " " + aiResponseText
-            };
-            return updatedMessages;
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        const chunkString = decoder.decode(value, { stream: true });
+        const lines = chunkString.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+            const jsonString = line.replace('data: ', '').trim();
+            if (!jsonString) continue;
+            
+            try {
+              const parsedChunk = JSON.parse(jsonString);
+              const token = parsedChunk.choices?.[0]?.delta?.content || "";
+              completeResponse += token;
+              
+              setSparkMessages(prev => prev.map(msg => 
+                msg.id === aiMessageId ? { ...msg, text: completeResponse } : msg
+              ));
+            } catch (err) {
+              console.error("Failed to parse a stream chunk:", err, jsonString);
+            }
           }
-          return prev;
-        });
-      } else {
-        setSparkMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'ai',
-          text: aiResponseText
-        }]);
+        }
       }
 
     } catch (error) {
       console.error("API Error:", error);
-      setSparkMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'ai',
-        text: "⚠️ Failed to connect to the live AI endpoint. Please check your network or Vercel logs."
-      }]);
+      setSparkMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId ? { ...msg, text: msg.text + "\n\n⚠️ Failed to connect to the live AI endpoint or stream was interrupted." } : msg
+      ));
     } finally {
       setIsSparkTyping(false);
     }
@@ -868,7 +859,7 @@ export default function Home() {
     e.preventDefault();
     if (!newMilestoneTitle || !newMilestoneDate) return;
     
-    const colors = ['text-red-500 bg-red-50', 'text-blue-500 bg-blue-50', 'text-green-500 bg-green-50', 'text-purple-500 bg-purple-50', 'text-orange-500 bg-orange-50'];
+    const colors = ['text-red-500 bg-red-50', 'text-blue-500 bg-green-50', 'text-purple-500 bg-purple-50', 'text-orange-500 bg-orange-50'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     
     const newM: Milestone = {
@@ -907,7 +898,7 @@ export default function Home() {
     if (pomodoroMode === 'break' && !pomodoroIsActive) setPomodoroTime(val);
   };
 
-  const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
+  const shuffleArray = <T,>(array: T[]): T[] => [...array].sort(() => Math.random() - 0.5);
   const setupActiveRecallCard = (index: number) => {
     if (flashcards.length === 0) return;
     const correctOption = flashcards[index].answer;
@@ -1020,7 +1011,7 @@ export default function Home() {
               d
             </h1>
             <div className="flex items-center gap-3 md:gap-4 text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
-              <span>Built by Benedict Fusin</span>
+              <span>Built by Benedict as Sojukai.Nvl</span>
               <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>
               <span className="text-slate-950 font-black">Auxilink Philippines</span>
             </div>
@@ -1168,7 +1159,7 @@ export default function Home() {
                   {user ? `Welcome back, ${displayName || user.email?.split('@')[0]}! 👋` : 'Welcome to iStud! 👋'}
                 </h2>
                 <p className="text-slate-500 font-medium italic text-sm md:text-lg border-l-4 border-blue-500 pl-3 md:pl-4 py-1">
-                  "{dailyQuote}"
+                  &quot;{dailyQuote}&quot;
                 </p>
               </div>
 
@@ -1245,7 +1236,7 @@ export default function Home() {
                   <div className="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                   <div className="flex justify-between items-center mb-4 relative z-10">
                     <h3 className="text-lg md:text-xl font-black flex items-center gap-2"><Icons.Brain /> Daily Deck Challenge</h3>
-                    <span className="bg-indigo-500 text-xs font-bold px-3 py-1 rounded-full">Today's Pick</span>
+                    <span className="bg-indigo-500 text-xs font-bold px-3 py-1 rounded-full">Today&apos;s Pick</span>
                   </div>
                   
                   {dailyCard ? (
@@ -1276,7 +1267,7 @@ export default function Home() {
                     </>
                   ) : (
                     <div className="text-center py-6 bg-indigo-500/50 rounded-2xl relative z-10">
-                      <p className="text-indigo-100 font-bold text-sm mb-4">You don't have any flashcards yet!</p>
+                      <p className="text-indigo-100 font-bold text-sm mb-4">You don&apos;t have any flashcards yet!</p>
                       <button onClick={() => setActiveTab('decks')} className="bg-white text-indigo-700 text-xs font-black px-5 py-2.5 rounded-full hover:bg-indigo-50 transition-colors">Create a Deck</button>
                     </div>
                   )}
@@ -1345,43 +1336,109 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* AUTOMATED CREATOR STATUS WIDGET */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-500 to-indigo-500"></div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-base font-black text-[#0F172A]">Creator Status</h3>
-                    <div className="bg-slate-100 px-2 py-1 rounded flex items-center gap-1 opacity-60">
-                      <Icons.Settings /> <span className="text-[9px] font-bold uppercase">Team</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100 gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                       <div className="relative shrink-0">
-                         <img src="https://github.com/sojukai-ece.png" alt="sojukai-ece" className="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover" />
-                         <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white transition-colors duration-300 ${devStatus === 'Online' ? 'bg-green-500' : devStatus === 'Updating' ? 'bg-blue-500' : 'bg-slate-400'}`}></div>
-                       </div>
-                       <div className="min-w-0">
-                         <span className="block font-bold text-sm text-[#0F172A] leading-tight truncate">sojukai.nvl</span>
-                         <a href="https://github.com/sojukai-ece" target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline font-bold transition-all truncate block">@sojukai-ece</a>
-                       </div>
-                    </div>
-                    
-                    <div className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-sm flex items-center gap-1.5 shrink-0 ${
-                      devStatus === 'Online' ? 'bg-green-50 text-green-700 border-green-200' :
-                      devStatus === 'Updating' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      'bg-slate-50 text-slate-500 border-slate-200'
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        devStatus === 'Online' ? 'bg-green-500 animate-pulse' :
-                        devStatus === 'Updating' ? 'bg-blue-500 animate-bounce' :
-                        'bg-slate-400'
-                      }`}></div>
-                      {devStatus}
-                    </div>
-                  </div>
-                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
+        {/* --- FOCUS HUB --- */}
+        {activeTab === 'focus-hub' && (
+          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in flex flex-col lg:flex-row gap-6 md:gap-8 min-h-full overflow-y-auto custom-scrollbar pb-24 md:pb-12">
+            {/* Left Col: Pomodoro */}
+            <div className="w-full lg:w-1/2 flex flex-col gap-6">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3"></div>
+                 
+                 <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                   <h2 className="text-xl md:text-3xl font-black text-[#0F172A] flex items-center gap-3">
+                     <Icons.Focus /> Focus Hub
+                   </h2>
+                   <div className="flex gap-2">
+                     <select value={selectedWorkTime} onChange={handleWorkTimeChange} className="bg-slate-50 border border-slate-200 text-xs font-bold px-2 py-1.5 rounded-lg outline-none cursor-pointer">
+                        <option value={1500}>25m Work</option>
+                        <option value={3000}>50m Work</option>
+                        <option value={3600}>60m Work</option>
+                     </select>
+                     <select value={selectedBreakTime} onChange={handleBreakTimeChange} className="bg-slate-50 border border-slate-200 text-xs font-bold px-2 py-1.5 rounded-lg outline-none cursor-pointer">
+                        <option value={300}>5m Break</option>
+                        <option value={600}>10m Break</option>
+                        <option value={900}>15m Break</option>
+                     </select>
+                   </div>
+                 </div>
+
+                 <div className="flex flex-col items-center justify-center py-8">
+                   <div className="flex bg-slate-100 p-1.5 rounded-xl mb-8">
+                     <button onClick={() => { setPomodoroMode('work'); setPomodoroTime(selectedWorkTime); setPomodoroIsActive(false); }} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all cursor-pointer ${pomodoroMode === 'work' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Work Session</button>
+                     <button onClick={() => { setPomodoroMode('break'); setPomodoroTime(selectedBreakTime); setPomodoroIsActive(false); }} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all cursor-pointer ${pomodoroMode === 'break' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Short Break</button>
+                   </div>
+
+                   <div className="relative flex items-center justify-center mb-8">
+                      <svg className="w-64 h-64 transform -rotate-90">
+                        <circle cx="128" cy="128" r="120" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-50" />
+                        <circle 
+                          cx="128" cy="128" r="120" stroke="currentColor" strokeWidth="8" fill="transparent" 
+                          className={`${pomodoroMode === 'work' ? 'text-blue-500' : 'text-green-500'} transition-all duration-1000 ease-linear`} 
+                          strokeDasharray={2 * Math.PI * 120} 
+                          strokeDashoffset={(2 * Math.PI * 120) * (1 - pomodoroTime / (pomodoroMode === 'work' ? selectedWorkTime : selectedBreakTime))} 
+                          strokeLinecap="round" 
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <span className="text-6xl font-black text-[#0F172A] tabular-nums">{formatClock(pomodoroTime)}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">{pomodoroMode === 'work' ? 'Focus Time' : 'Relax Time'}</span>
+                      </div>
+                   </div>
+
+                   <div className="flex gap-4 w-full px-4">
+                     <button onClick={() => setPomodoroIsActive(!pomodoroIsActive)} className={`flex-1 py-4 rounded-2xl font-black text-lg text-white transition-all shadow-md cursor-pointer hover:-translate-y-0.5 ${pomodoroIsActive ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                       {pomodoroIsActive ? 'PAUSE' : 'START'}
+                     </button>
+                     <button onClick={() => { setPomodoroIsActive(false); setPomodoroTime(pomodoroMode === 'work' ? selectedWorkTime : selectedBreakTime); }} className="w-16 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl transition-colors cursor-pointer" title="Reset Timer">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                     </button>
+                   </div>
+                 </div>
+              </div>
+            </div>
+
+            {/* Right Col: Tasks */}
+            <div className="w-full lg:w-1/2 flex flex-col">
+              <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col h-full lg:min-h-0 min-h-75">
+                <h3 className="text-xl font-black text-[#0F172A] mb-2">Study Tasks</h3>
+                <p className="text-sm font-medium text-slate-500 mb-6">Break down your study sessions into actionable items.</p>
+                
+                <form onSubmit={handleAddTask} className="flex gap-2 mb-6 shrink-0">
+                  <input 
+                    type="text" 
+                    value={newTaskInput}
+                    onChange={(e) => setNewTaskInput(e.target.value)}
+                    placeholder="What do you need to study today?" 
+                    className="flex-1 bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-colors"
+                  />
+                  <button type="submit" disabled={!newTaskInput.trim()} className="bg-[#0F172A] text-white px-5 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer">Add</button>
+                </form>
+
+                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 min-h-50">
+                  {tasks.length === 0 ? (
+                    <div className="text-center py-10">
+                      <span className="text-4xl opacity-50 mb-4 block">📋</span>
+                      <p className="text-slate-400 font-bold text-sm">No tasks added yet.<br/>Time to plan your study session!</p>
+                    </div>
+                  ) : (
+                    tasks.map(task => (
+                      <div key={task.id} className={`flex items-center gap-3 p-4 rounded-2xl border transition-all group ${task.completed ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-blue-200 shadow-sm hover:shadow-md'}`}>
+                        <button onClick={() => toggleTask(task.id)} className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors cursor-pointer ${task.completed ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-300 text-transparent hover:border-blue-400'}`}>
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </button>
+                        <span className={`flex-1 text-sm font-bold transition-all ${task.completed ? 'text-slate-400 line-through' : 'text-[#0F172A]'}`}>{task.text}</span>
+                        <button onClick={() => deleteTask(task.id)} className="text-slate-300 hover:text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                          <Icons.Trash />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1466,9 +1523,9 @@ export default function Home() {
                   </div>
                   
                   <div className="flex bg-slate-100 p-1.5 rounded-xl w-full md:w-auto">
-                    <button onClick={() => setSocialsSubTab('friends')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${socialsSubTab === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Connections</button>
-                    <button onClick={() => setSocialsSubTab('groups')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${socialsSubTab === 'groups' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Study Groups</button>
-                    <button onClick={() => setSocialsSubTab('search')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all relative ${socialsSubTab === 'search' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <button onClick={() => setSocialsSubTab('friends')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all cursor-pointer ${socialsSubTab === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Connections</button>
+                    <button onClick={() => setSocialsSubTab('groups')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all cursor-pointer ${socialsSubTab === 'groups' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Study Groups</button>
+                    <button onClick={() => setSocialsSubTab('search')} className={`flex-1 md:px-6 py-2 rounded-lg font-bold text-xs md:text-sm transition-all relative cursor-pointer ${socialsSubTab === 'search' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                       Find
                       {pendingRequests.length > 0 && <span className="absolute top-1.5 right-1.5 md:right-3 w-2 h-2 bg-red-500 rounded-full"></span>}
                     </button>
@@ -1484,7 +1541,7 @@ export default function Home() {
                          <div className="text-4xl mb-4 opacity-50">🔌</div>
                          <p className="font-bold text-slate-600 text-sm mb-1">Your network circuit is currently open.</p>
                          <p className="font-medium text-slate-400 text-xs mb-4">Search for classmates to close the loop!</p>
-                         <button onClick={() => setSocialsSubTab('search')} className="bg-[#0F172A] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800">Find Friends</button>
+                         <button onClick={() => setSocialsSubTab('search')} className="bg-[#0F172A] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 cursor-pointer">Find Friends</button>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1501,7 +1558,7 @@ export default function Home() {
                                   <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.university}</p>
                                </div>
                                <button onClick={() => handleRemoveFriend(friend.id)} className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer md:opacity-0 group-hover:opacity-100" title="Remove Connection">
-                                 <Icons.Trash />
+                                  <Icons.Trash />
                                </button>
                             </div>
                          ))}
@@ -1515,7 +1572,7 @@ export default function Home() {
                   <div className="animate-fade-in">
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="font-extrabold text-[#0F172A]">My Squads</h3>
-                      <button onClick={() => setIsCreatingGroup(!isCreatingGroup)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors">+ New Group</button>
+                      <button onClick={() => setIsCreatingGroup(!isCreatingGroup)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer">+ New Group</button>
                     </div>
 
                     {isCreatingGroup && (
@@ -1552,8 +1609,8 @@ export default function Home() {
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <button type="submit" disabled={!newGroupName.trim() || selectedFriendsForGroup.length === 0} className="bg-[#0F172A] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 disabled:opacity-50">Create Group</button>
-                            <button type="button" onClick={() => {setIsCreatingGroup(false); setNewGroupName(''); setSelectedFriendsForGroup([]);}} className="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50">Cancel</button>
+                            <button type="submit" disabled={!newGroupName.trim() || selectedFriendsForGroup.length === 0} className="bg-[#0F172A] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 disabled:opacity-50 cursor-pointer">Create Group</button>
+                            <button type="button" onClick={() => {setIsCreatingGroup(false); setNewGroupName(''); setSelectedFriendsForGroup([]);}} className="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer">Cancel</button>
                           </div>
                         </form>
                       </div>
@@ -1606,10 +1663,10 @@ export default function Home() {
                                 <p className="text-[10px] text-slate-500 truncate">{req.profiles?.course}</p>
                               </div>
                               <div className="flex gap-1 shrink-0">
-                                <button onClick={() => handleAcceptRequest(req.id, req.profiles!)} className="bg-blue-600 text-white p-1.5 rounded-lg hover:bg-blue-700 transition-colors" title="Accept">
+                                <button onClick={() => handleAcceptRequest(req.id, req.profiles!)} className="bg-blue-600 text-white p-1.5 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer" title="Accept">
                                   <Icons.UserCheck />
                                 </button>
-                                <button onClick={() => handleDeclineRequest(req.id)} className="bg-slate-100 text-slate-500 p-1.5 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors" title="Decline">
+                                <button onClick={() => handleDeclineRequest(req.id)} className="bg-slate-100 text-slate-500 p-1.5 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors cursor-pointer" title="Decline">
                                   <Icons.Trash />
                                 </button>
                               </div>
@@ -1674,7 +1731,7 @@ export default function Home() {
                         </div>
                       )}
                       
-                      {searchQuery && searchResults.length === 0 && !isSearchingNetwork && <p className="text-sm font-bold text-slate-400">No scholars found matching "{searchQuery}".</p>}
+                      {searchQuery && searchResults.length === 0 && !isSearchingNetwork && <p className="text-sm font-bold text-slate-400">No scholars found matching &quot;{searchQuery}&quot;.</p>}
                     </div>
                   </div>
                 )}
