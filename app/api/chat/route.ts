@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         "Authorization": `Bearer ${process.env.HF_TOKEN}`
       },
       body: JSON.stringify({
-        model: "deepseek-ai/DeepSeek-R1-0528",
+        model: "deepseek-ai/DeepSeek-V4-Pro-DSpark",
         messages: [{ role: "user", content: message }],
         max_tokens: 8192,      
         temperature: 0.6,     
