@@ -9,8 +9,7 @@ export async function POST(req: Request) {
         "Authorization": `Bearer ${process.env.HF_TOKEN}`
       },
       body: JSON.stringify({
-        // Appending :fastest ensures the router picks the most available GPU provider
-        model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:fastest", 
+        model: "deepseek-ai/DeepSeek-R1", 
         messages: [{ role: "user", content: message }],
         max_tokens: 4096,
         temperature: 0.6,     
