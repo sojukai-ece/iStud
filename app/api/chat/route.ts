@@ -9,16 +9,24 @@ export async function POST(req: Request) {
         "Authorization": `Bearer ${process.env.HF_TOKEN}`
       },
       body: JSON.stringify({
-        model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+        // Appending :fastest ensures the router picks the most available GPU provider
+        model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:fastest", 
         messages: [{ role: "user", content: message }],
-        max_tokens: 4096,      
+        max_tokens: 4096,
         temperature: 0.6,     
         stream: true           
       }),
     });
 
     if (!response.ok) {
-       return Response.json({ error: "Failed to fetch from HF" }, { status: response.status });
+       // Read the actual error from Hugging Face so we aren't guessing
+       const errorData = await response.text(); 
+       console.error("Hugging Face API Error:", response.status, errorData);
+       
+       return Response.json(
+         { error: "Failed to fetch from HF", details: errorData }, 
+         { status: response.status }
+       );
     }
 
     // Stream the raw bytes directly back to the frontend
@@ -27,6 +35,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
+    console.error("Server Error:", error);
     return Response.json({ error: "AI Server unreachable" }, { status: 500 });
   }
 }
