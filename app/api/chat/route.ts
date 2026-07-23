@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
         messages: [{ role: "user", content: message }],
-        max_tokens: 8192,      
+        max_tokens: 4096,      
         temperature: 0.6,     
         stream: true           
       }),
